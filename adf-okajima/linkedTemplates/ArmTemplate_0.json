@@ -1,0 +1,701 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nome do Data Factory",
+			"defaultValue": "adf-okajima"
+		},
+		"DataLake_Oracle_accountKey": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'accountKey' de 'DataLake_Oracle'"
+		},
+		"PostgreSupabase_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase'"
+		},
+		"PostgreSupabase_Portal_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_Portal'"
+		},
+		"DataLake_Oracle_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakeokajimapbi.dfs.core.windows.net/"
+		},
+		"PostgreSupabase_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.jjdddlihjecsviyxsnzm"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.rpglvgdxaepqtuyeitzo"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DataLake_Oracle')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Área staging do BD oracle.",
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('DataLake_Oracle_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('DataLake_Oracle_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PostgreSupabase')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('PostgreSupabase_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('PostgreSupabase_properties_typeProperties_database')]",
+					"username": "[parameters('PostgreSupabase_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('PostgreSupabase_password')]"
+					},
+					"sslMode": 1,
+					"authenticationType": "Basic",
+					"commandTimeout": 1800
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PostgreSupabase_Portal')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('PostgreSupabase_Portal_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('PostgreSupabase_Portal_properties_typeProperties_database')]",
+					"username": "[parameters('PostgreSupabase_Portal_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('PostgreSupabase_Portal_password')]"
+					},
+					"sslMode": 2,
+					"authenticationType": "Basic"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/integrationRuntimeOkajimaWINT')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Tabela_fatopedidorebaixador_supabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatopedidorebaixador"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": "fatopedidorebaixador_pbi"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_dimensao_supabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela_SB": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().Nome_Tabela_SB",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_fatos_supabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"tabela": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().tabela",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_tarefas_supabase_portal')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_Portal",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela_SB": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_tarefas"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().Nome_Tabela_SB",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_Portal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/app_campanha_metas_rca_supabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_Portal",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_campanha_extra"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "app_campanha_metas_rca"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_Portal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_dynamic')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Directory": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_adls_dynamic"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Directory",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_dynamic_okj')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Directory": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_adls_dynamic_okj"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Directory",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_dynamic_teste')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Directory": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_adls_dynamic_teste"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Directory",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbiokj"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_controle_meses_incrementais')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "controle_meses_incrementais"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_fato_faturamento_pasta')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatos_read"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "fatos/fatofaturamento_pbi",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_supabase_watermark_control')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "watermark_control_fatos"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_campanha_extra')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string",
+						"defaultValue": "app_campanha_metas_rca.parquet"
+					},
+					"Nome_Pasta": {
+						"type": "string",
+						"defaultValue": "campanhas_extra/campanha_extra_cupons"
+					}
+				},
+				"folder": {
+					"name": "ds_campanha_extra"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().Nome_Tabela",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Nome_Pasta",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"Nome_Pasta": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().Nome_Tabela",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_inc_full')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"anomes": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().Nome_Tabela, '_', dataset().anomes, '.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('dimensoes/', dataset().Nome_Tabela)",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_incremental')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"anomes": {
+						"type": "string"
+					},
+					"FileSystem": {
+						"type": "string",
+						"defaultValue": "teste"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().Nome_Tabela, '_', dataset().anomes, '.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('dimensoes/', dataset().Nome_Tabela)",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().FileSystem",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_teste')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"Nome_Pasta": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().Nome_Tabela",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
+							"type": "Expression"
+						},
+						"fileSystem": "teste"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		}
+	]
+}

@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-okajima"
+		},
+		"DataLake_Oracle_accountKey": {
+			"value": ""
+		},
+		"Oracle_OKAJIMA_WINT_password": {
+			"value": ""
+		},
+		"PostgreSupabase_password": {
+			"value": ""
+		},
+		"PostgreSupabase_Portal_password": {
+			"value": ""
+		},
+		"DataLake_Oracle_properties_typeProperties_url": {
+			"value": "https://datalakeokajimapbi.dfs.core.windows.net/"
+		},
+		"Oracle_OKAJIMA_WINT_properties_typeProperties_server": {
+			"value": "192.168.254.190/WINT"
+		},
+		"Oracle_OKAJIMA_WINT_properties_typeProperties_username": {
+			"value": "OKAJIMA"
+		},
+		"PostgreSupabase_properties_typeProperties_server": {
+			"value": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_properties_typeProperties_database": {
+			"value": "postgres"
+		},
+		"PostgreSupabase_properties_typeProperties_username": {
+			"value": "postgres.jjdddlihjecsviyxsnzm"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_server": {
+			"value": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_database": {
+			"value": "postgres"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_username": {
+			"value": "postgres.rpglvgdxaepqtuyeitzo"
+		}
+	}
+}

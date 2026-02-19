@@ -1,0 +1,193 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nome do Data Factory",
+			"defaultValue": "adf-okajima"
+		},
+		"DataLake_Oracle_accountKey": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'accountKey' de 'DataLake_Oracle'"
+		},
+		"Oracle_OKAJIMA_WINT_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'Oracle_OKAJIMA_WINT'"
+		},
+		"PostgreSupabase_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase'"
+		},
+		"PostgreSupabase_Portal_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_Portal'"
+		},
+		"DataLake_Oracle_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://datalakeokajimapbi.dfs.core.windows.net/"
+		},
+		"Oracle_OKAJIMA_WINT_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "192.168.254.190/WINT"
+		},
+		"Oracle_OKAJIMA_WINT_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "OKAJIMA"
+		},
+		"PostgreSupabase_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.jjdddlihjecsviyxsnzm"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-0-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_Portal_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.rpglvgdxaepqtuyeitzo"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI para a conta de armazenamento contendo os modelos do ARM vinculados"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Token SAS para a conta de armazenamento contendo modelos do ARM vinculados"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "adf-okajima_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"DataLake_Oracle_accountKey": {
+						"value": "[parameters('DataLake_Oracle_accountKey')]"
+					},
+					"PostgreSupabase_password": {
+						"value": "[parameters('PostgreSupabase_password')]"
+					},
+					"PostgreSupabase_Portal_password": {
+						"value": "[parameters('PostgreSupabase_Portal_password')]"
+					},
+					"DataLake_Oracle_properties_typeProperties_url": {
+						"value": "[parameters('DataLake_Oracle_properties_typeProperties_url')]"
+					},
+					"PostgreSupabase_properties_typeProperties_server": {
+						"value": "[parameters('PostgreSupabase_properties_typeProperties_server')]"
+					},
+					"PostgreSupabase_properties_typeProperties_database": {
+						"value": "[parameters('PostgreSupabase_properties_typeProperties_database')]"
+					},
+					"PostgreSupabase_properties_typeProperties_username": {
+						"value": "[parameters('PostgreSupabase_properties_typeProperties_username')]"
+					},
+					"PostgreSupabase_Portal_properties_typeProperties_server": {
+						"value": "[parameters('PostgreSupabase_Portal_properties_typeProperties_server')]"
+					},
+					"PostgreSupabase_Portal_properties_typeProperties_database": {
+						"value": "[parameters('PostgreSupabase_Portal_properties_typeProperties_database')]"
+					},
+					"PostgreSupabase_Portal_properties_typeProperties_username": {
+						"value": "[parameters('PostgreSupabase_Portal_properties_typeProperties_username')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "adf-okajima_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Oracle_OKAJIMA_WINT_password": {
+						"value": "[parameters('Oracle_OKAJIMA_WINT_password')]"
+					},
+					"Oracle_OKAJIMA_WINT_properties_typeProperties_server": {
+						"value": "[parameters('Oracle_OKAJIMA_WINT_properties_typeProperties_server')]"
+					},
+					"Oracle_OKAJIMA_WINT_properties_typeProperties_username": {
+						"value": "[parameters('Oracle_OKAJIMA_WINT_properties_typeProperties_username')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-okajima_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "adf-okajima_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-okajima_ArmTemplate_1')]"
+			]
+		},
+		{
+			"name": "adf-okajima_ArmTemplate_3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-okajima_ArmTemplate_2')]"
+			]
+		}
+	]
+}
