@@ -1,0 +1,19 @@
+{
+	"name": "Oracle_OKAJIMA_WINT",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "Oracle",
+		"version": "2.0",
+		"typeProperties": {
+			"server": "192.168.254.190/WINT",
+			"authenticationType": "Basic",
+			"username": "OKAJIMA",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiI1ZDczZTYxNi0yODRlLTRlZjItOTY3OS01MDZhNmExMjQ5YjMiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntimeOkajimaWINT",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

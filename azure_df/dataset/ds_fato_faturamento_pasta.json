@@ -1,0 +1,27 @@
+{
+	"name": "ds_fato_faturamento_pasta",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ds_fatos_read"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "fatos/fatofaturamento_pbi",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

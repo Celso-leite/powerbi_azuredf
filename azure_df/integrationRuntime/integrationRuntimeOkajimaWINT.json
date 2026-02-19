@@ -1,0 +1,6 @@
+{
+	"name": "integrationRuntimeOkajimaWINT",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

@@ -1,0 +1,139 @@
+{
+	"name": "pl_metas",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach_tabelas_meta",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.lista_tabelas",
+						"type": "Expression"
+					},
+					"batchCount": 10,
+					"activities": [
+						{
+							"name": "copy_metas",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item())",
+										"type": "Expression"
+									},
+									"queryTimeout": "02:00:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "tabelas_metas_supabase",
+									"type": "DatasetReference",
+									"parameters": {
+										"nome_tabelas": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_metas",
+									"type": "DatasetReference",
+									"parameters": {
+										"nome_pasta": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"nome_arquivo": {
+											"value": "@concat(item(), '.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"lista_tabelas": {
+				"type": "array",
+				"defaultValue": [
+					"fatometacategoria_pbi",
+					"fatometacliente_pbi",
+					"fatometadepartamento_pbi",
+					"fatometafornecedor_pbi",
+					"fatometaproduto_pbi",
+					"fatometarca_pbi",
+					"fatometamarca_pbi",
+					"fatometagrupoprod_pbi",
+					"fatometasecao_pbi",
+					"fatometafornecedorpex_pbi",
+					"fatometagrupoprodpex_pbi",
+					"fatometaprodutopex_pbi",
+					"fatometaclientepex_pbi",
+					"fatometacliprodpex_pbi",
+					"fatometacligrupoprod_pbi",
+					"fatometafornecedorextra_pbi",
+					"fatometaprodutoextra_pbi",
+					"fatometaclienteextra_pbi",
+					"fatometagrupoprodextra_pbi",
+					"fatometaclientecnx_pbi",
+					"fatometasuperfechamento_pbi",
+					"fatometacliprod_pbi",
+					"fatometageral_pbi",
+					"fatometageralfornec_pbi",
+					"fatometasemanapasta_pbi",
+					"fatometasemanaregiao_pbi",
+					"fatometageralfornecddd_pbi",
+					"fatometafeira_pbi",
+					"fatometaprevsemanal_pbi",
+					"fatometabaseexpo_pbi",
+					"fatometaprodutox_pbi",
+					"fatometarcaextra_pbi",
+					"fatometaexpo_pbi",
+					"metapassagemexpo_pbi",
+					"metaclienteconexao_pbi"
+				]
+			}
+		},
+		"folder": {
+			"name": "metas"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-15T19:12:06Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

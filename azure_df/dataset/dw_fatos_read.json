@@ -1,0 +1,39 @@
+{
+	"name": "dw_fatos_read",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FolderPath": {
+				"type": "string"
+			},
+			"WildcardFileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_fatos_read"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().WildcardFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().FolderPath",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

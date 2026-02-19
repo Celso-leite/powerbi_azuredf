@@ -1,0 +1,20 @@
+{
+	"name": "app_campanha_metas_rca_supabase",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase_Portal",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ds_campanha_extra"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": "public",
+			"table": "app_campanha_metas_rca"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

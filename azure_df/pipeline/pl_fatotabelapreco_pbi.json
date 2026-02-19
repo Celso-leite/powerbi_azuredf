@@ -1,0 +1,88 @@
+{
+	"name": "pl_fatotabelapreco_pbi",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_Oracle_to_ADLS",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": {
+							"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOTABELAPRECO_PBI WHERE CODIGOREGIAO = 70 AND PRECOTABELA IS NOT NULL')",
+							"type": "Expression"
+						},
+						"partitionOption": "None",
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings",
+							"compressionCodec": "snappy"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_oracle_query_consulting",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_dynamic_okj",
+						"type": "DatasetReference",
+						"parameters": {
+							"Directory": {
+								"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace('OKJ_FATOTABELAPRECO_PBI', 'OKJ_', '')))",
+								"type": "Expression"
+							},
+							"FileName": {
+								"value": "@concat(toLower('OKJ_FATOTABELAPRECO_PBI'), '.parquet')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"SinkDirectoryRoot": {
+				"type": "string",
+				"defaultValue": "fatos"
+			}
+		},
+		"folder": {
+			"name": "fatotabelapreco"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-02-06T13:24:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

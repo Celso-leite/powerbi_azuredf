@@ -1,0 +1,287 @@
+{
+	"name": "DfTarefasBase",
+	"properties": {
+		"folder": {
+			"name": "tarefas"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcOkjTarefas"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcOkjTarefasProd"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcOkjTarefasRcas"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimFornecedor"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimProduto"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference"
+					},
+					"name": "SinkTarefasBase"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference"
+					},
+					"name": "SinkTarefasXRca"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JoinDimProd"
+				},
+				{
+					"name": "AggProd"
+				},
+				{
+					"name": "AggRcaModelo"
+				},
+				{
+					"name": "JoinBaseProd"
+				},
+				{
+					"name": "JoinBaseRca"
+				},
+				{
+					"name": "DeriveCamposBase"
+				},
+				{
+					"name": "SelectBaseFinal"
+				},
+				{
+					"name": "JoinXRca"
+				},
+				{
+					"name": "SelectXRcaFinal"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id as long,",
+				"          descricao as string,",
+				"          tipo as string,",
+				"          data_inicio as timestamp,",
+				"          data_fim as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcOkjTarefas",
+				"source(output(",
+				"          id_tarefa as long,",
+				"          codpasta as long,",
+				"          codfornec as long,",
+				"          catcamp as string,",
+				"          catokj as string,",
+				"          codcategoria as long,",
+				"          codprod as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcOkjTarefasProd",
+				"source(output(",
+				"          id_tarefa as long,",
+				"          codusur as long,",
+				"          bees_profile as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcOkjTarefasRcas",
+				"source(output(",
+				"          id as string,",
+				"          codigo_fornecedor as integer,",
+				"          razao_social as string,",
+				"          nome_fantasia as string,",
+				"          descricao_fornecedor as string,",
+				"          codigo_fornecedor_principal as integer,",
+				"          descricao_fornecedor_principal as string,",
+				"          nome_fornecedor_principal as string,",
+				"          cnpj_cpf_fornecedor as string,",
+				"          inscricao_estadual as string,",
+				"          tipo_pessoa as string,",
+				"          bairro_fornecedor as string,",
+				"          cidade_fornecedor as string,",
+				"          uf_fornecedor as string,",
+				"          cep_fornecedor as string,",
+				"          email_fornecedor as string,",
+				"          telefone_comercial as string,",
+				"          contato_comercial as string,",
+				"          situacao_fornecedor as string,",
+				"          codigo_comprador as integer,",
+				"          descricao_comprador as string,",
+				"          nome_comprador as string,",
+				"          email_comprador as string,",
+				"          celular_comprador as string,",
+				"          situacao_comprador as string,",
+				"          codigo_equipe as integer,",
+				"          pasta_campanha as string,",
+				"          situacao_equipe as string,",
+				"          data_cadastro_fornecedor as timestamp,",
+				"          data_bloqueio_fornecedor as timestamp,",
+				"          fornecedor_expo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcDimFornecedor",
+				"source(output(",
+				"          id as string,",
+				"          codigoproduto as integer,",
+				"          codigocategoria as integer,",
+				"          codigosubcategoria as integer,",
+				"          codigosecao as integer,",
+				"          codigodepartamento as integer,",
+				"          codigofabrica as string,",
+				"          codigofornecedor as integer,",
+				"          codigoprodutoprincipal as integer,",
+				"          descricaoproduto as string,",
+				"          descricaocategoria as string,",
+				"          descricaodepartamento as string,",
+				"          descricaosecao as string,",
+				"          descricaosubcategoria as string,",
+				"          descricaoprodutoprincipal as string,",
+				"          produto as string,",
+				"          categoria as string,",
+				"          tipomedicamento as string,",
+				"          subcategoria as string,",
+				"          secao as string,",
+				"          departamento as string,",
+				"          embalagem as string,",
+				"          embalagemmaster as string,",
+				"          classe as string,",
+				"          classevenda as string,",
+				"          subclasse as string,",
+				"          codmarca as integer,",
+				"          marca as string,",
+				"          importado as string,",
+				"          linhaproduto as string,",
+				"          codlinhaprazo as integer,",
+				"          ean13 as string,",
+				"          foralinha as string,",
+				"          situacao as string,",
+				"          codigodistribuicao as integer,",
+				"          distribuicao as string,",
+				"          categoriacampanha as string,",
+				"          categoriaokajima as string,",
+				"          produtoprincipal as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcDimProduto",
+				"SrcOkjTarefasProd, SrcDimProduto join(toLong(codprod) == toLong(codigoproduto),",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'both')~> JoinDimProd",
+				"JoinDimProd aggregate(groupBy(id_tarefa),",
+				"     qtde_skus = countDistinct(codprod),",
+				"          codfornec_unico = iif(countDistinct(codigofornecedor) == 1, min(codigofornecedor), toInteger(null()))) ~> AggProd",
+				"SrcOkjTarefasRcas aggregate(groupBy(id_tarefa),",
+				"     qtde_modelos_bdr = countDistinct(bees_profile)) ~> AggRcaModelo",
+				"SrcOkjTarefas, AggProd join(id == id_tarefa,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinBaseProd",
+				"JoinBaseProd, AggRcaModelo join(id == AggRcaModelo@id_tarefa,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinBaseRca",
+				"JoinBaseRca derive(descricao = regexReplace(regexReplace(descricao, '\\\\u00A0', ' '), '\\\\s+', ' '),",
+				"          vigente = iif(currentDate() >= toDate(data_inicio) && currentDate() <= toDate(coalesce(data_fim, currentDate())), true(), false()),",
+				"          qtde_skus = coalesce(qtde_skus, 0L),",
+				"          qtde_modelos_bdr = coalesce(qtde_modelos_bdr, 0L)) ~> DeriveCamposBase",
+				"DeriveCamposBase select(mapColumn(",
+				"          id_tarefa = id,",
+				"          descricao,",
+				"          tipo,",
+				"          data_inicio,",
+				"          data_fim,",
+				"          vigente,",
+				"          qtde_skus,",
+				"          codfornec_unico,",
+				"          qtde_modelos_bdr",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectBaseFinal",
+				"SrcOkjTarefasRcas, SelectBaseFinal join(SrcOkjTarefasRcas@id_tarefa == SelectBaseFinal@id_tarefa,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinXRca",
+				"JoinXRca select(mapColumn(",
+				"          id_tarefa = SrcOkjTarefasRcas@id_tarefa,",
+				"          codusur,",
+				"          bees_profile,",
+				"          descricao,",
+				"          tipo,",
+				"          data_inicio,",
+				"          data_fim,",
+				"          vigente,",
+				"          qtde_skus,",
+				"          codfornec_unico,",
+				"          qtde_modelos_bdr",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectXRcaFinal",
+				"SelectBaseFinal sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:['pbi_tarefas_base.parquet'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> SinkTarefasBase",
+				"SelectXRcaFinal sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:['pbi_tarefas_x_rca.parquet'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> SinkTarefasXRca"
+			]
+		}
+	}
+}

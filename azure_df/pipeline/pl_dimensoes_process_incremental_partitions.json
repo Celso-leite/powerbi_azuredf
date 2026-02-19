@@ -1,0 +1,155 @@
+{
+	"name": "pl_dimensoes_process_incremental_partitions",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.anomesList",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Delete_Incremental_File",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "dw_dimensoes_incremental",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela": {
+											"value": "@{last(split(pipeline().parameters.tableName, '.'))}",
+											"type": "Expression"
+										},
+										"anomes": {
+											"value": "@item().anomes",
+											"type": "Expression"
+										},
+										"FileSystem": {
+											"value": "@pipeline().parameters.fileSystem",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						},
+						{
+							"name": "Copy_Incremental_Partition",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Delete_Incremental_File",
+									"dependencyConditions": [
+										"Succeeded",
+										"Skipped"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.02:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 180,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+										"type": "Expression"
+									},
+									"queryTimeout": "01:00:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Tabelas_dimensao_supabase",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela_SB": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_dimensoes_incremental",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela": {
+											"value": "@{last(split(pipeline().parameters.tableName, '.'))}",
+											"type": "Expression"
+										},
+										"anomes": {
+											"value": "@item().anomes",
+											"type": "Expression"
+										},
+										"FileSystem": {
+											"value": "@pipeline().parameters.fileSystem",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"tableName": {
+				"type": "string"
+			},
+			"anomesColumn": {
+				"type": "string"
+			},
+			"anomesList": {
+				"type": "array"
+			},
+			"fileSystem": {
+				"type": "string",
+				"defaultValue": "powerbi"
+			}
+		},
+		"folder": {
+			"name": "dimensoes/prod"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-02-10T13:28:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,20 @@
+{
+	"name": "ds_controle_meses_incrementais",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ds_fatos_dinamico"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": "public",
+			"table": "controle_meses_incrementais"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

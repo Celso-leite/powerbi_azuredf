@@ -1,0 +1,73 @@
+{
+	"name": "pl_dimperiodo",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_dimperiodo",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SELECT * FROM public.dimperiodo_pbi ORDER BY data;",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "tabela_periodo_supabase",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_dimperiodo",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": {
+								"value": "dimperiodo.parquet",
+								"type": "Expression"
+							},
+							"Nome_Pasta": {
+								"value": "dimensoes",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "periodo"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-10T19:18:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

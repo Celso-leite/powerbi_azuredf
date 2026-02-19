@@ -1,0 +1,205 @@
+{
+	"name": "pl_tarefas_stg_portal",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_Stg_okj_tarefas",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas;",
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabelas_tarefas_supabase_portal",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela_SB": "okj_tarefas"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": "stg_okj_tarefas.parquet"
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy_Stg_okj_tarefas_prod",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_prod;",
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabelas_tarefas_supabase_portal",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela_SB": "okj_tarefas_prod"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": "stg_okj_tarefas_prod.parquet"
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy_Stg_okj_tarefas_rcas",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_rcas;",
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabelas_tarefas_supabase_portal",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela_SB": "okj_tarefas_rcas"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": "stg_okj_tarefas_rcas.parquet"
+						}
+					}
+				]
+			},
+			{
+				"name": "Copy_Stg_okj_tarefas_cli",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_cli;",
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabelas_tarefas_supabase_portal",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela_SB": "okj_tarefas_cli"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": "stg_okj_tarefas_cli.parquet"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "tarefas"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-17T12:06:18Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

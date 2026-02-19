@@ -1,0 +1,109 @@
+{
+	"name": "pl_hitloreal",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy HitLoreal View",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": {
+							"value": "@if(\n    empty(pipeline().parameters.CustomQuery),\n    concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', pipeline().parameters.TableName),\n    pipeline().parameters.CustomQuery\n)",
+							"type": "Expression"
+						},
+						"partitionOption": "None",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_oracle_dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"SchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"Directory": {
+								"value": "@pipeline().parameters.SinkDirectory",
+								"type": "Expression"
+							},
+							"FileName": {
+								"value": "@pipeline().parameters.SinkFileName",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"TableName": {
+				"type": "string",
+				"defaultValue": "HITLOREAL_RESULTADOS_VW"
+			},
+			"CustomQuery": {
+				"type": "string",
+				"defaultValue": "SELECT CAST(COD_RCA AS NUMBER(19,0)) AS COD_RCA, CAST(COD_CLIENTE AS NUMBER(19,0)) AS COD_CLIENTE, CAST(COD_PRODUTO AS NUMBER(19,0)) AS COD_PRODUTO, CAST(POSITIVOU_FATURADO AS NUMBER(10,0)) AS POSITIVOU_FATURADO, CAST(POSITIVOU_VENDIDO AS NUMBER(10,0)) AS POSITIVOU_VENDIDO FROM OKAJIMA.HITLOREAL_RESULTADOS_VW"
+			},
+			"SinkDirectory": {
+				"type": "string",
+				"defaultValue": "fatos/fatohitloreal_pbi"
+			},
+			"SinkFileName": {
+				"type": "string",
+				"defaultValue": "fatohitloreal_pbi.parquet"
+			}
+		},
+		"folder": {
+			"name": "hitloreal"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-01-09T14:30:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

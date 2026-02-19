@@ -1,0 +1,39 @@
+{
+	"name": "dw_metas",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"nome_pasta": {
+				"type": "string"
+			},
+			"nome_arquivo": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_metas_dimanico"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().nome_arquivo",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat('metas/', dataset().nome_pasta)",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

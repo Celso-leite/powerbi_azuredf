@@ -1,0 +1,41 @@
+{
+	"name": "dw_fatopedidorebaixador",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Nome_Arquivo": {
+				"type": "string",
+				"defaultValue": "fatopedidorebaixador_pbi.parquet"
+			},
+			"Nome_Pasta": {
+				"type": "string",
+				"defaultValue": "fatos"
+			}
+		},
+		"folder": {
+			"name": "ds_fatopedidorebaixador"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().Nome_Arquivo",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().Nome_Pasta, '/fatopedidorebaixador_pbi')",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

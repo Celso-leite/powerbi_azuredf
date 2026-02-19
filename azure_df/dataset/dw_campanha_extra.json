@@ -1,0 +1,41 @@
+{
+	"name": "dw_campanha_extra",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Nome_Tabela": {
+				"type": "string",
+				"defaultValue": "app_campanha_metas_rca.parquet"
+			},
+			"Nome_Pasta": {
+				"type": "string",
+				"defaultValue": "campanhas_extra/campanha_extra_cupons"
+			}
+		},
+		"folder": {
+			"name": "ds_campanha_extra"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().Nome_Tabela",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Nome_Pasta",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

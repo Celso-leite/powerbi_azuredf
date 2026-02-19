@@ -1,0 +1,35 @@
+{
+	"name": "ds_oracle_dynamic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Oracle_OKAJIMA_WINT",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_oracle_dynamic"
+		},
+		"annotations": [],
+		"type": "OracleTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().SchemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

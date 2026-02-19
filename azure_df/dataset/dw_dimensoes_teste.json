@@ -1,0 +1,39 @@
+{
+	"name": "dw_dimensoes_teste",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Nome_Tabela": {
+				"type": "string"
+			},
+			"Nome_Pasta": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_dimensoes_dinamico"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().Nome_Tabela",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
+					"type": "Expression"
+				},
+				"fileSystem": "teste"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,73 @@
+{
+	"name": "pl_tarefas_df",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute_DataFlow_Tarefas",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.02:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DfTarefasFatoDim",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"SrcTarefas": {
+								"FolderPath": "tarefas/stg_okj_tarefas",
+								"WildcardFileName": "stg_okj_tarefas.parquet"
+							},
+							"SrcTarefasCli": {
+								"FolderPath": "tarefas/stg_okj_tarefas_cli",
+								"WildcardFileName": "stg_okj_tarefas_cli.parquet"
+							},
+							"SrcTarefasRcas": {
+								"FolderPath": "tarefas/stg_okj_tarefas_rcas",
+								"WildcardFileName": "stg_okj_tarefas_rcas.parquet"
+							},
+							"SrcTarefasProd": {
+								"FolderPath": "tarefas/stg_okj_tarefas_prod",
+								"WildcardFileName": "stg_okj_tarefas_prod.parquet"
+							},
+							"SrcDimCliente": {
+								"FolderPath": "dimensoes/dimcliente_pbi",
+								"WildcardFileName": "dimcliente_pbi.parquet"
+							},
+							"SrcDimRca": {
+								"FolderPath": "dimensoes/dimrca_pbi",
+								"WildcardFileName": "dimrca_pbi.parquet"
+							},
+							"SrcDimRotaRca": {
+								"FolderPath": "dimensoes/dimrotarca_pbi",
+								"WildcardFileName": "dimrotarca_pbi.parquet"
+							},
+							"SinkDimTarefa": {
+								"Nome_Tabela": "dimtarefa_pbi"
+							},
+							"SinkFatoTarefa": {
+								"Nome_Tabela": "fatotarefa_pbi"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"folder": {
+			"name": "tarefas"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-20T15:11:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

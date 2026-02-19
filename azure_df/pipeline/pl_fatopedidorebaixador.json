@@ -1,0 +1,103 @@
+{
+	"name": "pl_fatopedidorebaixador",
+	"properties": {
+		"activities": [
+			{
+				"name": "If_Load_Type",
+				"type": "IfCondition",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Execute_Incremental_Pipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_fatopedidorebaixador_incremental",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.SchemaName",
+										"type": "Expression"
+									},
+									"SinkDirectoryRoot": {
+										"value": "@pipeline().parameters.SinkDirectoryRoot",
+										"type": "Expression"
+									},
+									"AnomesList": {
+										"value": "@pipeline().parameters.AnomesList",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Execute_Full_Pipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_fatopedidorebaixador_full",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.SchemaName",
+										"type": "Expression"
+									},
+									"SinkDirectoryRoot": {
+										"value": "@pipeline().parameters.SinkDirectoryRoot",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"SinkDirectoryRoot": {
+				"type": "string",
+				"defaultValue": "fatos"
+			},
+			"AnomesList": {
+				"type": "array",
+				"defaultValue": []
+			},
+			"LoadType": {
+				"type": "string",
+				"defaultValue": "incremental"
+			}
+		},
+		"folder": {
+			"name": "fatopedidorebaixador/pl_rebaixador_otimizado"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-02-03T20:53:38Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

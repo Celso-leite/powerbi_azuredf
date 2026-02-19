@@ -1,0 +1,9 @@
+{
+	"name": "adf-okajima",
+	"location": "brazilsouth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "13bce7ff-f581-44cd-833b-a4d29fd389df",
+		"tenantId": "09eafea2-b100-4f4b-83a5-5e30a0ca79d0"
+	}
+}

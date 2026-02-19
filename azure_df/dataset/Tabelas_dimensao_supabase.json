@@ -1,0 +1,27 @@
+{
+	"name": "Tabelas_dimensao_supabase",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Nome_Tabela_SB": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_dimensoes_dinamico"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"table": {
+				"value": "@dataset().Nome_Tabela_SB",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

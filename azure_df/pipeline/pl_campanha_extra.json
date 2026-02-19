@@ -1,0 +1,73 @@
+{
+	"name": "pl_campanha_extra",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_campanha_metas_rca",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": "SELECT * FROM public.app_campanha_metas_rca;",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "app_campanha_metas_rca_supabase",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_campanha_extra",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Tabela": {
+								"value": "app_campanha_metas_rca.parquet",
+								"type": "Expression"
+							},
+							"Nome_Pasta": {
+								"value": "campanhas_extra/campanha_extra_cupons",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "campanha_extra"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-10T19:18:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

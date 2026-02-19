@@ -1,0 +1,20 @@
+{
+	"name": "tabela_periodo_supabase",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ds_dimensoes_dinamico"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": "public",
+			"table": "dimperiodo_pbi"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

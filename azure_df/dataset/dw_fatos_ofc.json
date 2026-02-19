@@ -1,0 +1,40 @@
+{
+	"name": "dw_fatos_ofc",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"tabela": {
+				"type": "string"
+			},
+			"anomes": {
+				"type": "string",
+				"defaultValue": "\"\""
+			}
+		},
+		"folder": {
+			"name": "ds_fatos_dinamico"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().tabela, '_', dataset().anomes, '.parquet')",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat('fatos/', dataset().tabela)",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,42 @@
+{
+	"name": "Trigger_dimensoes",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_dimensoes",
+					"type": "PipelineReference"
+				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_dimensoes_oracle_adls3",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2025-01-01T06:45:00",
+				"timeZone": "E. South America Standard Time",
+				"schedule": {
+					"minutes": [
+						45
+					],
+					"hours": [
+						9,
+						12,
+						15,
+						18,
+						21
+					]
+				}
+			}
+		}
+	}
+}

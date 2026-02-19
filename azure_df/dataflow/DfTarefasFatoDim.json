@@ -1,0 +1,412 @@
+{
+	"name": "DfTarefasFatoDim",
+	"properties": {
+		"folder": {
+			"name": "tarefas"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcTarefas"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcTarefasCli"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcTarefasRcas"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcTarefasProd"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimCliente"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimRca"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_fato_faturamento_pasta",
+						"type": "DatasetReference"
+					},
+					"name": "SrcFatoFaturamento"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas_read",
+						"type": "DatasetReference"
+					},
+					"name": "SrcDimRotaRca"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference"
+					},
+					"name": "SinkDimTarefa"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_tarefas",
+						"type": "DatasetReference"
+					},
+					"name": "SinkFatoTarefa"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectDimTarefa"
+				},
+				{
+					"name": "JoinCliCidade"
+				},
+				{
+					"name": "SelectAlvoCli"
+				},
+				{
+					"name": "JoinRcaPerfil"
+				},
+				{
+					"name": "SelectAlvoRca"
+				},
+				{
+					"name": "JoinAlvoCompleto"
+				},
+				{
+					"name": "FilterFatoRecente"
+				},
+				{
+					"name": "JoinFatoProd"
+				},
+				{
+					"name": "SelectVendasRelevantes"
+				},
+				{
+					"name": "LookupDatasTarefa"
+				},
+				{
+					"name": "JoinAlvoComVendas"
+				},
+				{
+					"name": "FilterVigencia"
+				},
+				{
+					"name": "AggRealizado"
+				},
+				{
+					"name": "FilterCarteiraRca"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id as long,",
+				"          descricao as string,",
+				"          tipo as string,",
+				"          data_inicio as timestamp,",
+				"          data_fim as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcTarefas",
+				"source(output(",
+				"          id_tarefa as long,",
+				"          codativ as long,",
+				"          codcli as long,",
+				"          codpraca as long,",
+				"          codcidade as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcTarefasCli",
+				"source(output(",
+				"          id_tarefa as long,",
+				"          codusur as long,",
+				"          bees_profile as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcTarefasRcas",
+				"source(output(",
+				"          id_tarefa as long,",
+				"          codpasta as long,",
+				"          codfornec as long,",
+				"          catcamp as string,",
+				"          catokj as string,",
+				"          codcategoria as long,",
+				"          codprod as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcTarefasProd",
+				"source(output(",
+				"          id as string,",
+				"          codigocliente as integer,",
+				"          cliente as string,",
+				"          descricaocliente as string,",
+				"          cpf_cnpj as string,",
+				"          tipocliente as string,",
+				"          codigoibge as integer,",
+				"          codigocidade as integer,",
+				"          cidade as string,",
+				"          uf as string,",
+				"          bairro as string,",
+				"          cep as string,",
+				"          endereco as string,",
+				"          ddd as string,",
+				"          nomefantasia as string,",
+				"          classe as string,",
+				"          classificacao as string,",
+				"          emailcliente as string,",
+				"          codigoramoatividade as integer,",
+				"          ramoatividade as string,",
+				"          descricaorede as string,",
+				"          praca as string,",
+				"          codigorota as integer,",
+				"          rota as string,",
+				"          codigorede as integer,",
+				"          regiao as string,",
+				"          ufregiao as string,",
+				"          codigoclienteprincipal as integer,",
+				"          nomefantasiaclienteprincipal as string,",
+				"          clienteprincipal as string,",
+				"          codigoregiao as integer,",
+				"          regiaopreco as string,",
+				"          codfilialnf as string,",
+				"          status as string,",
+				"          diasinativos as string,",
+				"          base_expo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcDimCliente",
+				"source(output(",
+				"          codigorca as decimal(38,18),",
+				"          codigosupervisor as decimal(38,18),",
+				"          codigogerente as decimal(38,18),",
+				"          rca as string,",
+				"          descricaorca as string,",
+				"          emailrca as string,",
+				"          supervisor as string,",
+				"          descricaosupervisor as string,",
+				"          emailsupervisor as string,",
+				"          gerente as string,",
+				"          descricaogerente as string,",
+				"          emailgerente as string,",
+				"          situacao as string,",
+				"          tipo as string,",
+				"          modelocampanha as string,",
+				"          hierarquia as string,",
+				"          roteirizacao as string,",
+				"          cpf as string,",
+				"          areaatuacao as string,",
+				"          codigocentrocusto as string,",
+				"          id as string,",
+				"          bees as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcDimRca",
+				"source(output(",
+				"          id as string,",
+				"          rcacabecalho as long,",
+				"          numeronotavenda as long,",
+				"          numeropedido as long,",
+				"          numerotransacaovenda as long,",
+				"          especie as string,",
+				"          serie as string,",
+				"          codigorcavenda as long,",
+				"          numeroregiaomov as long,",
+				"          codigoproduto as long,",
+				"          codigocliente as long,",
+				"          codigofilial as string,",
+				"          codigoauxiliar as long,",
+				"          codigofornecedor as long,",
+				"          numerocarregamento as long,",
+				"          codigotipovenda as long,",
+				"          codigoatividademov as long,",
+				"          datafaturamento as timestamp,",
+				"          quantidade as decimal(38,18),",
+				"          quantidadebonificada as decimal(38,18),",
+				"          quantidadecaixa as decimal(38,18),",
+				"          quantidademaster as decimal(38,18),",
+				"          valorunitario as decimal(38,18),",
+				"          valorunitariobonificado as decimal(38,18),",
+				"          valorunitariotabela as decimal(38,18),",
+				"          valorunitariocusto as decimal(38,18),",
+				"          valortotal as decimal(38,18),",
+				"          valortotalcusto as decimal(38,18),",
+				"          valorverbaunitario as decimal(38,18),",
+				"          valorfrete as decimal(38,18),",
+				"          valoroutrasdespesas as decimal(38,18),",
+				"          descontofinanceiro as decimal(38,18),",
+				"          pesounitarioliquido as decimal(38,18),",
+				"          pesounitariobruto as decimal(38,18),",
+				"          pesobrutototal as decimal(38,18),",
+				"          pesoliquidototal as decimal(38,18),",
+				"          volumeunitario as decimal(38,18),",
+				"          valorst as decimal(38,18),",
+				"          valorpis as decimal(38,18),",
+				"          valorcofins as decimal(38,18),",
+				"          valoripi as decimal(38,18),",
+				"          valoricms as decimal(38,18),",
+				"          percentualcomissao as decimal(38,18),",
+				"          prazomedio as long,",
+				"          numeroitemtransacaovenda as long,",
+				"          anomes_faturamento as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     rowUrlColumn: 'nome_arquivo_origem',",
+				"     format: 'parquet') ~> SrcFatoFaturamento",
+				"source(output(",
+				"          id as string,",
+				"          codigorota as integer,",
+				"          nomerota as string,",
+				"          descricaorota as string,",
+				"          tiporota as string,",
+				"          alocacaorota as string,",
+				"          pastarota as string,",
+				"          codigorca as integer,",
+				"          nomerca as string,",
+				"          descricaorca as string,",
+				"          codigocliente as integer,",
+				"          nomecliente as string,",
+				"          descricaocliente as string,",
+				"          codigosupervisor as integer,",
+				"          nomesupervisor as string,",
+				"          descricaosupervisor as string,",
+				"          datainclusao as timestamp,",
+				"          observacoes as string,",
+				"          tipovinculo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SrcDimRotaRca",
+				"SrcTarefas select(mapColumn(",
+				"          id_tarefa = id,",
+				"          descricao,",
+				"          tipo,",
+				"          data_inicio,",
+				"          data_fim",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectDimTarefa",
+				"SrcTarefasCli, SrcDimCliente join(toLong(codcidade) == toLong(codigoibge),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinCliCidade",
+				"JoinCliCidade select(mapColumn(",
+				"          id_tarefa_cli = id_tarefa,",
+				"          codigocliente",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectAlvoCli",
+				"SrcTarefasRcas, SrcDimRca join(toString(bees_profile) == toString(bees),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinRcaPerfil",
+				"JoinRcaPerfil select(mapColumn(",
+				"          id_tarefa_rca = id_tarefa,",
+				"          codigorca",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectAlvoRca",
+				"SelectAlvoCli, SelectAlvoRca join(id_tarefa_cli == id_tarefa_rca,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinAlvoCompleto",
+				"SrcFatoFaturamento filter(toInteger(regexExtract(nome_arquivo_origem, '(\\\\d{6})', 1)) >= toInteger(toString(addMonths(currentDate(), -6), 'yyyyMM'))) ~> FilterFatoRecente",
+				"FilterFatoRecente, SrcTarefasProd join(toLong(codigoproduto) == toLong(codprod),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinFatoProd",
+				"JoinFatoProd select(mapColumn(",
+				"          id_tarefa_venda = id_tarefa,",
+				"          codigorca_venda = codigorcavenda,",
+				"          codigocliente_venda = codigocliente,",
+				"          datafaturamento",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectVendasRelevantes",
+				"FilterCarteiraRca, SrcTarefas lookup(id_tarefa_cli == id,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> LookupDatasTarefa",
+				"LookupDatasTarefa, SelectVendasRelevantes join(toLong(id_tarefa_cli) == toLong(id_tarefa_venda)",
+				"     && toLong(codigocliente) == toLong(codigocliente_venda)",
+				"     && toLong(codigorca) == toLong(codigorca_venda),",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'left')~> JoinAlvoComVendas",
+				"JoinAlvoComVendas filter(isNull(datafaturamento) || (toDate(datafaturamento) >= toDate(data_inicio) && toDate(datafaturamento) <= toDate(coalesce(data_fim, currentDate())))) ~> FilterVigencia",
+				"FilterVigencia aggregate(groupBy(id_tarefa = id_tarefa_cli,",
+				"          codigorca,",
+				"          codigocliente,",
+				"          data_inicio,",
+				"          data_fim),",
+				"     REALIZADO = max(iif(isNull(datafaturamento), 0, 1))) ~> AggRealizado",
+				"JoinAlvoCompleto, SrcDimRotaRca exists(toInteger(SelectAlvoCli@codigocliente) == toInteger(SrcDimRotaRca@codigocliente) \r",
+				"        && \r",
+				"        toInteger(SelectAlvoRca@codigorca) == toInteger(SrcDimRotaRca@codigorca),",
+				"     negate:false,",
+				"     broadcast: 'left')~> FilterCarteiraRca",
+				"SelectDimTarefa sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SinkDimTarefa",
+				"AggRealizado sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SinkFatoTarefa"
+			]
+		}
+	}
+}

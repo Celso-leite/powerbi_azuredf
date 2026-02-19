@@ -1,0 +1,73 @@
+{
+	"name": "pl_fatopedidorebaixador_v1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_Fatopedidorebaixador",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatopedidorebaixador_pbi",
+							"type": "Expression"
+						},
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings",
+							"compressionCodec": "snappy"
+						}
+					},
+					"enableStaging": false,
+					"parallelCopies": 4,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabela_fatopedidorebaixador_supabase",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_fatopedidorebaixador",
+						"type": "DatasetReference",
+						"parameters": {
+							"Nome_Arquivo": "fatopedidorebaixador_pbi.parquet",
+							"Nome_Pasta": "fatos"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "fatopedidorebaixador/pl_antigo"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-01-28T21:13:17Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,41 @@
+{
+	"name": "dw_dimperiodo",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DataLake_Oracle",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Nome_Tabela": {
+				"type": "string",
+				"defaultValue": "dimperiodo.parquet"
+			},
+			"Nome_Pasta": {
+				"type": "string",
+				"defaultValue": "dimensoes_pbi"
+			}
+		},
+		"folder": {
+			"name": "ds_dimensoes_dinamico"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().Nome_Tabela",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
+					"type": "Expression"
+				},
+				"fileSystem": "powerbi"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

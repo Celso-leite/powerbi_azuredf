@@ -1,0 +1,36 @@
+{
+	"name": "Trigger_metas",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_metas",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2025-01-01T06:35:00",
+				"timeZone": "E. South America Standard Time",
+				"schedule": {
+					"minutes": [
+						45
+					],
+					"hours": [
+						9,
+						12,
+						15,
+						18,
+						21
+					]
+				}
+			}
+		}
+	}
+}

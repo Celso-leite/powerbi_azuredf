@@ -1,0 +1,19 @@
+{
+	"name": "Tabela_fatopedidorebaixador_supabase",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ds_fatopedidorebaixador"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"table": "fatopedidorebaixador_pbi"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

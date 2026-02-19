@@ -1,0 +1,142 @@
+{
+	"name": "pl_fatos_carga_historica",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup_Get_All_Anomes",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "@concat('SELECT DISTINCT ', pipeline().parameters.anomesColumn, ' AS anomes FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' IS NOT NULL ORDER BY 1')",
+							"type": "Expression"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_controle_meses_incrementais",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_Get_All_Anomes",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup_Get_All_Anomes').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 10,
+					"activities": [
+						{
+							"name": "Copy_Historical_Partition",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.01:30:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 180,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+										"type": "Expression"
+									},
+									"queryTimeout": "01:00:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Tabelas_fatos_supabase",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_fatos_ofc",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										},
+										"anomes": {
+											"value": "@item().anomes",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"tableName": {
+				"type": "string",
+				"defaultValue": "fatofaturamento_pbi"
+			},
+			"anomesColumn": {
+				"type": "string",
+				"defaultValue": "anomes_faturamento"
+			}
+		},
+		"folder": {
+			"name": "fatos"
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-01-06T15:21:00Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
