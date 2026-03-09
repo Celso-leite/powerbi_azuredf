@@ -260,7 +260,7 @@ Tabelas SQL utilizadas (origem Oracle):
 ### 7.3 `pl_fatotabelapreco_pbi`
 
 - Query Oracle filtrada:
-  - `CODIGOREGIAO = 70`
+  - `CODIGOREGIAO IN (12, 50, 51, 52, 53, 54, 55, 56, 57, 70)`
   - `PRECOTABELA IS NOT NULL`
 - Destino:
   - `fatos/fatotabelapreco_pbi/okj_fatotabelapreco_pbi.parquet`
