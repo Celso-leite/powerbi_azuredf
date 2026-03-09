@@ -18,7 +18,7 @@
 					"source": {
 						"type": "OracleSource",
 						"oracleReaderQuery": {
-							"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOTABELAPRECO_PBI WHERE CODIGOREGIAO = 70 AND PRECOTABELA IS NOT NULL')",
+							"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOTABELAPRECO_PBI WHERE CODIGOREGIAO IN (12, 50, 51, 52, 53, 54, 55, 56, 57, 70) AND PRECOTABELA IS NOT NULL')",
 							"type": "Expression"
 						},
 						"partitionOption": "None",
