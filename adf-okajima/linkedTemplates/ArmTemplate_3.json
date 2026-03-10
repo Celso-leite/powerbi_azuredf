@@ -33,13 +33,6 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatotabelapreco_pbi",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -99,11 +92,19 @@
 								45
 							],
 							"hours": [
+								6,
+								7,
+								8,
 								9,
-								12,
+								10,
+								11,
+								13,
+								14,
 								15,
+								16,
+								17,
 								18,
-								21
+								22
 							]
 						}
 					}
@@ -150,11 +151,10 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								40
+								45
 							],
 							"hours": [
 								0,
-								1,
 								6,
 								7,
 								8,

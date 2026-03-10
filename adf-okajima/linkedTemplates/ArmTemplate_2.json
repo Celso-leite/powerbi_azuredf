@@ -2326,7 +2326,7 @@
 							"source": {
 								"type": "OracleSource",
 								"oracleReaderQuery": {
-									"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOTABELAPRECO_PBI WHERE CODIGOREGIAO = 70 AND PRECOTABELA IS NOT NULL')",
+									"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOTABELAPRECO_PBI WHERE CODIGOREGIAO IN (70) AND PRECOTABELA IS NOT NULL')",
 									"type": "Expression"
 								},
 								"partitionOption": "None",
@@ -2751,10 +2751,15 @@
 							],
 							"hours": [
 								9,
-								12,
+								10,
+								11,
+								13,
+								14,
 								15,
+								16,
+								17,
 								18,
-								21
+								22
 							]
 						}
 					}
