@@ -15,12 +15,6 @@
 					"referenceName": "pl_positivakc_oracle_adls",
 					"type": "PipelineReference"
 				}
-			},
-			{
-				"pipelineReference": {
-					"referenceName": "pl_fatotabelapreco_pbi",
-					"type": "PipelineReference"
-				}
 			}
 		],
 		"type": "ScheduleTrigger",
