@@ -2674,6 +2674,127 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_tabelas_preco_pbi')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Tabelas_Preco",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableConfigurations",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().TableName)",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(item().SinkDirectoryRoot, '/', toLower(replace(item().TableName, 'OKJ_', '')))",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item().TableName), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"TableConfigurations": {
+						"type": "array",
+						"defaultValue": [
+							{
+								"TableName": "OKJ_DIMPRECOCLIENTE_PBI",
+								"SinkDirectoryRoot": "dimensoes"
+							},
+							{
+								"TableName": "OKJ_FATOTABELAPRECO_PBI",
+								"SinkDirectoryRoot": "fatos"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "fatotabelapreco"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic_okj')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_tarefas_df')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -4252,7 +4373,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -4300,7 +4421,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -4358,7 +4479,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -4430,7 +4551,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
