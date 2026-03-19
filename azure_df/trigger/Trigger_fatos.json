@@ -21,6 +21,12 @@
 					"referenceName": "pl_dimensoes_incremental",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_dimensoes_inc",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
