@@ -198,19 +198,19 @@
 					{
 						"tableName": "fatofaturamento_pbi",
 						"anomesColumn": "anomes_faturamento",
-						"monthsToProcess": 2,
+						"monthsToProcess": 1,
 						"loadType": "incremental"
 					},
 					{
 						"tableName": "fatodevolucao_pbi",
 						"anomesColumn": "anomes_devolucao",
-						"monthsToProcess": 2,
+						"monthsToProcess": 1,
 						"loadType": "incremental"
 					},
 					{
 						"tableName": "fatopedidovenda_pbi",
 						"anomesColumn": "anomes_venda",
-						"monthsToProcess": 2,
+						"monthsToProcess": 1,
 						"loadType": "incremental"
 					},
 					{
