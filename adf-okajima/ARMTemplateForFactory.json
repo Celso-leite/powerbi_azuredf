@@ -4921,6 +4921,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes_inc",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -4962,7 +4969,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_inc')]"
 			]
 		},
 		{
@@ -5312,6 +5320,119 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fatos_process_incremental_partitions')]",
 				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc_full')]",
 				"[concat(variables('factoryId'), '/datasets/Tabelas_fatos_supabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_inc')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.Tabelas_Dimensao",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 6,
+							"activities": [
+								{
+									"name": "CopyDimensions",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+												"type": "Expression"
+											},
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 4,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "Tabelas_dimensao_supabase",
+											"type": "DatasetReference",
+											"parameters": {
+												"Nome_Tabela_SB": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_dimensoes",
+											"type": "DatasetReference",
+											"parameters": {
+												"Nome_Tabela": {
+													"value": "@{concat(item(), '.parquet')}",
+													"type": "Expression"
+												},
+												"Nome_Pasta": "dimensoes"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Tabelas_Dimensao": {
+						"type": "array",
+						"defaultValue": [
+							"promos_bees_sv_rca",
+							"fatoestoqueatual_pbi"
+						]
+					}
+				},
+				"folder": {
+					"name": "dimensoes/prod"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-02-10T13:29:16Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Tabelas_dimensao_supabase')]",
+				"[concat(variables('factoryId'), '/datasets/dw_dimensoes')]"
 			]
 		}
 	]
