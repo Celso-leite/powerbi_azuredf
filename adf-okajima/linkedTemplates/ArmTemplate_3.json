@@ -13,240 +13,47 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_fatos')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
 					{
-						"name": "ForEach_Table",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@variables('table_configurations')",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"activities": [
-								{
-									"name": "If_Load_Type",
-									"type": "IfCondition",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"expression": {
-											"value": "@equals(item().loadType, 'full')",
-											"type": "Expression"
-										},
-										"ifFalseActivities": [
-											{
-												"name": "Lookup_Get_Anomes",
-												"type": "Lookup",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "0.12:00:00",
-													"retry": 0,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "PostgreSqlV2Source",
-														"query": {
-															"value": "@concat('SELECT TO_CHAR(datum, ''YYYYMM'') AS anomes FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum')",
-															"type": "Expression"
-														}
-													},
-													"dataset": {
-														"referenceName": "ds_controle_meses_incrementais",
-														"type": "DatasetReference",
-														"parameters": {}
-													},
-													"firstRowOnly": false
-												}
-											},
-											{
-												"name": "Execute_Incremental_Load_Pipeline",
-												"type": "ExecutePipeline",
-												"dependsOn": [
-													{
-														"activity": "Lookup_Get_Anomes",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"pipeline": {
-														"referenceName": "pl_fatos_process_incremental_partitions",
-														"type": "PipelineReference"
-													},
-													"waitOnCompletion": true,
-													"parameters": {
-														"tableName": {
-															"value": "@item().tableName",
-															"type": "Expression"
-														},
-														"anomesColumn": {
-															"value": "@item().anomesColumn",
-															"type": "Expression"
-														},
-														"anomesList": {
-															"value": "@activity('Lookup_Get_Anomes').output.value",
-															"type": "Expression"
-														}
-													}
-												}
-											}
-										],
-										"ifTrueActivities": [
-											{
-												"name": "Delete_Full_Load_Folder",
-												"type": "Delete",
-												"dependsOn": [],
-												"policy": {
-													"timeout": "0.12:00:00",
-													"retry": 1,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"dataset": {
-														"referenceName": "dw_fatos_ofc_full",
-														"type": "DatasetReference",
-														"parameters": {
-															"tabela": {
-																"value": "@item().tableName",
-																"type": "Expression"
-															}
-														}
-													},
-													"enableLogging": false,
-													"storeSettings": {
-														"type": "AzureBlobFSWriteSettings",
-														"recursive": true
-													}
-												}
-											},
-											{
-												"name": "Copy_Full_Load",
-												"type": "Copy",
-												"dependsOn": [
-													{
-														"activity": "Delete_Full_Load_Folder",
-														"dependencyConditions": [
-															"Succeeded"
-														]
-													}
-												],
-												"policy": {
-													"timeout": "0.12:00:00",
-													"retry": 1,
-													"retryIntervalInSeconds": 30,
-													"secureOutput": false,
-													"secureInput": false
-												},
-												"userProperties": [],
-												"typeProperties": {
-													"source": {
-														"type": "PostgreSqlV2Source",
-														"query": {
-															"value": "@concat('SELECT * FROM public.', item().tableName)",
-															"type": "Expression"
-														}
-													},
-													"sink": {
-														"type": "ParquetSink",
-														"storeSettings": {
-															"type": "AzureBlobFSWriteSettings"
-														},
-														"formatSettings": {
-															"type": "ParquetWriteSettings"
-														}
-													},
-													"enableStaging": false
-												},
-												"inputs": [
-													{
-														"referenceName": "Tabelas_fatos_supabase",
-														"type": "DatasetReference",
-														"parameters": {
-															"tabela": {
-																"value": "@item().tableName",
-																"type": "Expression"
-															}
-														}
-													}
-												],
-												"outputs": [
-													{
-														"referenceName": "dw_fatos_ofc_full",
-														"type": "DatasetReference",
-														"parameters": {
-															"tabela": {
-																"value": "@item().tableName",
-																"type": "Expression"
-															}
-														}
-													}
-												]
-											}
-										]
-									}
-								}
+						"pipelineReference": {
+							"referenceName": "pl_metas",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								50
+							],
+							"hours": [
+								9,
+								10,
+								11,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
 							]
 						}
 					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"table_configurations": {
-						"type": "Array",
-						"defaultValue": [
-							{
-								"tableName": "fatofaturamento_pbi",
-								"anomesColumn": "anomes_faturamento",
-								"monthsToProcess": 1,
-								"loadType": "incremental"
-							},
-							{
-								"tableName": "fatodevolucao_pbi",
-								"anomesColumn": "anomes_devolucao",
-								"monthsToProcess": 1,
-								"loadType": "incremental"
-							},
-							{
-								"tableName": "fatopedidovenda_pbi",
-								"anomesColumn": "anomes_venda",
-								"monthsToProcess": 1,
-								"loadType": "incremental"
-							},
-							{
-								"tableName": "map_venda_devolucao_pbi",
-								"anomesColumn": "",
-								"monthsToProcess": 0,
-								"loadType": "full"
-							}
-						]
-					}
-				},
-				"folder": {
-					"name": "fatos"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-02T14:26:03Z"
+				}
 			},
 			"dependsOn": []
 		},
@@ -359,12 +166,57 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								50
+							],
+							"hours": [
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -414,51 +266,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								50
-							],
-							"hours": [
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -483,13 +290,6 @@
 					{
 						"pipelineReference": {
 							"referenceName": "pl_dimensoes_incremental",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_dimensoes_inc",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -532,7 +332,6 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]"
 			]
 		}
