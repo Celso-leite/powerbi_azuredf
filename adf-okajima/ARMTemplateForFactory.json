@@ -4607,6 +4607,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes_incremental",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -4647,7 +4654,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]"
 			]
 		},
 		{
