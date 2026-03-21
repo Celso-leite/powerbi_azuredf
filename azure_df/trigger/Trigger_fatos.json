@@ -15,6 +15,12 @@
 					"referenceName": "pl_fatopedidorebaixador",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_dimensoes_incremental",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
