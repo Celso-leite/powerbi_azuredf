@@ -37,7 +37,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								50
+								45
 							],
 							"hours": [
 								9,
@@ -197,7 +197,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								50
+								45
 							],
 							"hours": [
 								11,
@@ -242,7 +242,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								50
+								45
 							],
 							"hours": [
 								6,
@@ -293,6 +293,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_tabelas_preco_pbi",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -304,7 +311,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								50
+								45
 							],
 							"hours": [
 								0,
