@@ -1,5 +1,5 @@
 {
-	"name": "pl_dimensoes_inc",
+	"name": "pl_dimensoes_est",
 	"properties": {
 		"activities": [
 			{
@@ -90,7 +90,6 @@
 			"Tabelas_Dimensao": {
 				"type": "array",
 				"defaultValue": [
-					"promos_bees_sv_rca",
 					"fatoestoqueatual_pbi"
 				]
 			}
