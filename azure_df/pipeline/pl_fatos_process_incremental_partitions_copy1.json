@@ -1,0 +1,141 @@
+{
+	"name": "pl_fatos_process_incremental_partitions_copy1",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.anomesList",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Delete_Incremental_Partition",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "dw_fatos_ofc",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										},
+										"anomes": {
+											"value": "@item().anomes",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"recursive": true
+								}
+							}
+						},
+						{
+							"name": "Copy_Incremental_Partition",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Delete_Incremental_Partition",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.02:00:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 180,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+										"type": "Expression"
+									},
+									"queryTimeout": "01:00:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "Tabelas_fatos_supabase",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_fatos_ofc",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": {
+											"value": "@pipeline().parameters.tableName",
+											"type": "Expression"
+										},
+										"anomes": {
+											"value": "@item().anomes",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"tableName": {
+				"type": "string"
+			},
+			"anomesColumn": {
+				"type": "string"
+			},
+			"anomesList": {
+				"type": "array"
+			}
+		},
+		"folder": {
+			"name": "fatos/Backup"
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-11-10T15:21:38Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
