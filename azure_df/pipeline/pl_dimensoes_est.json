@@ -3,20 +3,53 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "ForEach1",
-				"type": "ForEach",
+				"name": "Lookup_Publication_State",
+				"type": "Lookup",
 				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
-					"items": {
-						"value": "@pipeline().parameters.Tabelas_Dimensao",
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "SELECT p.entity_name, p.status, p.publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = 'SUCCESS' AND p.publication_version > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM public.etl_publication_control p LEFT JOIN public.etl_consumer_control c ON c.consumer_name = 'adf_powerbi' AND c.entity_name = p.entity_name WHERE p.entity_name = 'fatoestoqueatual_pbi';",
+							"type": "Expression"
+						},
+						"queryTimeout": "00:05:00"
+					},
+					"dataset": {
+						"referenceName": "ds_supabase_etl_control",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "If_Should_Copy",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Lookup_Publication_State",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1')",
 						"type": "Expression"
 					},
-					"isSequential": false,
-					"batchCount": 6,
-					"activities": [
+					"ifTrueActivities": [
 						{
-							"name": "CopyDimensions",
+							"name": "Copy_Estoque_Atual",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -31,7 +64,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+										"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatoestoqueatual_pbi;",
 										"type": "Expression"
 									},
 									"queryTimeout": "00:30:00"
@@ -62,7 +95,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"Nome_Tabela_SB": {
-											"value": "@item()",
+											"value": "fatoestoqueatual_pbi",
 											"type": "Expression"
 										}
 									}
@@ -74,26 +107,54 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"Nome_Tabela": {
-											"value": "@{concat(item(), '.parquet')}",
+											"value": "fatoestoqueatual_pbi.parquet",
 											"type": "Expression"
 										},
 										"Nome_Pasta": "dimensoes"
 									}
 								}
 							]
+						},
+						{
+							"name": "Lookup_Update_Consumer_Control",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "Copy_Estoque_Atual",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.00:10:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''fatoestoqueatual_pbi'', ', string(activity(''Lookup_Publication_State'').output.firstRow.publication_version), ', ''', activity(''Lookup_Publication_State'').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
+										"type": "Expression"
+									},
+									"queryTimeout": "00:05:00"
+								},
+								"dataset": {
+									"referenceName": "ds_supabase_etl_consumer_control",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": true
+							}
 						}
-					]
+					],
+					"ifFalseActivities": []
 				}
 			}
 		],
-		"parameters": {
-			"Tabelas_Dimensao": {
-				"type": "array",
-				"defaultValue": [
-					"fatoestoqueatual_pbi"
-				]
-			}
-		},
 		"folder": {
 			"name": "dimensoes/prod"
 		},
