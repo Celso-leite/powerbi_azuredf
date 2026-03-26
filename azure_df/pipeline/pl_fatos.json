@@ -21,7 +21,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"on": {
-									"value": "@concat(item().loadType, '|', string(item().usePublicationControl))",
+									"value": "@concat(item().loadType, '|', toLower(string(item().usePublicationControl)))",
 									"type": "Expression"
 								},
 								"cases": [
