@@ -36,7 +36,7 @@
 											"type": "Expression"
 										},
 										"anomes": {
-											"value": "@item().anomes",
+											"value": "@item()",
 											"type": "Expression"
 										}
 									}
@@ -71,7 +71,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
 										"type": "Expression"
 									},
 									"queryTimeout": "01:00:00"
@@ -109,7 +109,7 @@
 											"type": "Expression"
 										},
 										"anomes": {
-											"value": "@item().anomes",
+											"value": "@item()",
 											"type": "Expression"
 										}
 									}
