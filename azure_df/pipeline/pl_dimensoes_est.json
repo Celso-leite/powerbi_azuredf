@@ -138,7 +138,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''fatoestoqueatual_pbi'', ', string(activity(''Lookup_Publication_State'').output.firstRow.publication_version), ', ''', activity(''Lookup_Publication_State'').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
+										"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''fatoestoqueatual_pbi'', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
 										"type": "Expression"
 									},
 									"queryTimeout": "00:05:00"
