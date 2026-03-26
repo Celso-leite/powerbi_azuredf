@@ -254,7 +254,6 @@
 							"dimfilial_pbi",
 							"promos_bees_sv_rca",
 							"dimmotivodevolucao_pbi",
-							"fatoestoqueatual_pbi",
 							"fatorotalog_pbi"
 						]
 					}
@@ -411,26 +410,60 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_inc')]",
+			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_est')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "ForEach1",
-						"type": "ForEach",
+						"name": "Lookup_Publication_State",
+						"type": "Lookup",
 						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
 						"userProperties": [],
 						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.Tabelas_Dimensao",
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SELECT p.entity_name, p.status, p.publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = 'SUCCESS' AND p.publication_version > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM public.etl_publication_control p LEFT JOIN public.etl_consumer_control c ON c.consumer_name = 'adf_powerbi' AND c.entity_name = p.entity_name WHERE p.entity_name = 'fatoestoqueatual_pbi';",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:05:00"
+							},
+							"dataset": {
+								"referenceName": "ds_supabase_etl_control",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": true
+						}
+					},
+					{
+						"name": "If_Should_Copy",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Publication_State",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1')",
 								"type": "Expression"
 							},
-							"isSequential": false,
-							"batchCount": 6,
-							"activities": [
+							"ifTrueActivities": [
 								{
-									"name": "CopyDimensions",
+									"name": "Copy_Estoque_Atual",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -445,7 +478,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+												"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatoestoqueatual_pbi;",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -476,7 +509,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"Nome_Tabela_SB": {
-													"value": "@item()",
+													"value": "fatoestoqueatual_pbi",
 													"type": "Expression"
 												}
 											}
@@ -488,13 +521,49 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"Nome_Tabela": {
-													"value": "@{concat(item(), '.parquet')}",
+													"value": "fatoestoqueatual_pbi.parquet",
 													"type": "Expression"
 												},
 												"Nome_Pasta": "dimensoes"
 											}
 										}
 									]
+								},
+								{
+									"name": "Lookup_Update_Consumer_Control",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "Copy_Estoque_Atual",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.00:10:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''fatoestoqueatual_pbi'', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
+												"type": "Expression"
+											},
+											"queryTimeout": "00:05:00"
+										},
+										"dataset": {
+											"referenceName": "ds_supabase_etl_consumer_control",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"firstRowOnly": true
+									}
 								}
 							]
 						}
@@ -503,15 +572,6 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"parameters": {
-					"Tabelas_Dimensao": {
-						"type": "array",
-						"defaultValue": [
-							"promos_bees_sv_rca",
-							"fatoestoqueatual_pbi"
-						]
-					}
-				},
 				"folder": {
 					"name": "dimensoes/prod"
 				},
@@ -519,8 +579,10 @@
 				"lastPublishTime": "2026-02-10T13:29:16Z"
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_supabase_etl_control')]",
 				"[concat(variables('factoryId'), '/datasets/Tabelas_dimensao_supabase')]",
-				"[concat(variables('factoryId'), '/datasets/dw_dimensoes')]"
+				"[concat(variables('factoryId'), '/datasets/dw_dimensoes')]",
+				"[concat(variables('factoryId'), '/datasets/ds_supabase_etl_consumer_control')]"
 			]
 		},
 		{
@@ -3702,6 +3764,54 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_supabase_etl_consumer_control')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "etl_consumer_control"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_supabase_etl_control')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "etl_publication_control"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_supabase_watermark_control')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -5433,6 +5543,398 @@
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas_read')]",
 				"[concat(variables('factoryId'), '/datasets/ds_fato_faturamento_pasta')]",
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatos_copy1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Table",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('table_configurations')",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "If_Load_Type",
+									"type": "IfCondition",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@equals(item().loadType, 'full')",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "Lookup_Get_Anomes",
+												"type": "Lookup",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "PostgreSqlV2Source",
+														"query": {
+															"value": "@concat('SELECT TO_CHAR(datum, ''YYYYMM'') AS anomes FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum')",
+															"type": "Expression"
+														}
+													},
+													"dataset": {
+														"referenceName": "ds_controle_meses_incrementais",
+														"type": "DatasetReference",
+														"parameters": {}
+													},
+													"firstRowOnly": false
+												}
+											},
+											{
+												"name": "Execute_Incremental_Load_Pipeline",
+												"type": "ExecutePipeline",
+												"dependsOn": [
+													{
+														"activity": "Lookup_Get_Anomes",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_fatos_process_incremental_partitions",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"tableName": {
+															"value": "@item().tableName",
+															"type": "Expression"
+														},
+														"anomesColumn": {
+															"value": "@item().anomesColumn",
+															"type": "Expression"
+														},
+														"anomesList": {
+															"value": "@activity('Lookup_Get_Anomes').output.value",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										],
+										"ifTrueActivities": [
+											{
+												"name": "Delete_Full_Load_Folder",
+												"type": "Delete",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 1,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "dw_fatos_ofc_full",
+														"type": "DatasetReference",
+														"parameters": {
+															"tabela": {
+																"value": "@item().tableName",
+																"type": "Expression"
+															}
+														}
+													},
+													"enableLogging": false,
+													"storeSettings": {
+														"type": "AzureBlobFSWriteSettings",
+														"recursive": true
+													}
+												}
+											},
+											{
+												"name": "Copy_Full_Load",
+												"type": "Copy",
+												"dependsOn": [
+													{
+														"activity": "Delete_Full_Load_Folder",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 1,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "PostgreSqlV2Source",
+														"query": {
+															"value": "@concat('SELECT * FROM public.', item().tableName)",
+															"type": "Expression"
+														}
+													},
+													"sink": {
+														"type": "ParquetSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "ParquetWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "Tabelas_fatos_supabase",
+														"type": "DatasetReference",
+														"parameters": {
+															"tabela": {
+																"value": "@item().tableName",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "dw_fatos_ofc_full",
+														"type": "DatasetReference",
+														"parameters": {
+															"tabela": {
+																"value": "@item().tableName",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"table_configurations": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"tableName": "fatofaturamento_pbi",
+								"anomesColumn": "anomes_faturamento",
+								"monthsToProcess": 1,
+								"loadType": "incremental"
+							},
+							{
+								"tableName": "fatodevolucao_pbi",
+								"anomesColumn": "anomes_devolucao",
+								"monthsToProcess": 1,
+								"loadType": "incremental"
+							},
+							{
+								"tableName": "fatopedidovenda_pbi",
+								"anomesColumn": "anomes_venda",
+								"monthsToProcess": 1,
+								"loadType": "incremental"
+							},
+							{
+								"tableName": "map_venda_devolucao_pbi",
+								"anomesColumn": "",
+								"monthsToProcess": 0,
+								"loadType": "full"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "fatos/Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-02-02T14:26:03Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_controle_meses_incrementais')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatos_process_incremental_partitions')]",
+				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc_full')]",
+				"[concat(variables('factoryId'), '/datasets/Tabelas_fatos_supabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatos_process_incremental_partitions_copy1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.anomesList",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Delete_Incremental_Partition",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												},
+												"anomes": {
+													"value": "@item().anomes",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSWriteSettings",
+											"recursive": true
+										}
+									}
+								},
+								{
+									"name": "Copy_Incremental_Partition",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Delete_Incremental_Partition",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.02:00:00",
+										"retry": 3,
+										"retryIntervalInSeconds": 180,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+												"type": "Expression"
+											},
+											"queryTimeout": "01:00:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Tabelas_fatos_supabase",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												},
+												"anomes": {
+													"value": "@item().anomes",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"tableName": {
+						"type": "string"
+					},
+					"anomesColumn": {
+						"type": "string"
+					},
+					"anomesList": {
+						"type": "array"
+					}
+				},
+				"folder": {
+					"name": "fatos/Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-11-10T15:21:38Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc')]",
+				"[concat(variables('factoryId'), '/datasets/Tabelas_fatos_supabase')]"
 			]
 		}
 	]

@@ -25,6 +25,95 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_incremental')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"anomes": {
+						"type": "string"
+					},
+					"FileSystem": {
+						"type": "string",
+						"defaultValue": "teste"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat(dataset().Nome_Tabela, '_', dataset().anomes, '.parquet')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('dimensoes/', dataset().Nome_Tabela)",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().FileSystem",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_teste')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string"
+					},
+					"Nome_Pasta": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_dimensoes_dinamico"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().Nome_Tabela",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
+							"type": "Expression"
+						},
+						"fileSystem": "teste"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dw_dimperiodo')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -655,7 +744,6 @@
 							"dimfilial_pbi",
 							"promos_bees_sv_rca",
 							"dimmotivodevolucao_pbi",
-							"fatoestoqueatual_pbi",
 							"fatorotalog_pbi"
 						]
 					}
@@ -805,26 +893,60 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_inc')]",
+			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_est')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "ForEach1",
-						"type": "ForEach",
+						"name": "Lookup_Publication_State",
+						"type": "Lookup",
 						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
 						"userProperties": [],
 						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.Tabelas_Dimensao",
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SELECT p.entity_name, p.status, p.publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = 'SUCCESS' AND p.publication_version > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM public.etl_publication_control p LEFT JOIN public.etl_consumer_control c ON c.consumer_name = 'adf_powerbi' AND c.entity_name = p.entity_name WHERE p.entity_name = 'fatoestoqueatual_pbi';",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:05:00"
+							},
+							"dataset": {
+								"referenceName": "ds_supabase_etl_control",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": true
+						}
+					},
+					{
+						"name": "If_Should_Copy",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Publication_State",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1')",
 								"type": "Expression"
 							},
-							"isSequential": false,
-							"batchCount": 6,
-							"activities": [
+							"ifTrueActivities": [
 								{
-									"name": "CopyDimensions",
+									"name": "Copy_Estoque_Atual",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -839,7 +961,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+												"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatoestoqueatual_pbi;",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -870,7 +992,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"Nome_Tabela_SB": {
-													"value": "@item()",
+													"value": "fatoestoqueatual_pbi",
 													"type": "Expression"
 												}
 											}
@@ -882,13 +1004,49 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"Nome_Tabela": {
-													"value": "@{concat(item(), '.parquet')}",
+													"value": "fatoestoqueatual_pbi.parquet",
 													"type": "Expression"
 												},
 												"Nome_Pasta": "dimensoes"
 											}
 										}
 									]
+								},
+								{
+									"name": "Lookup_Update_Consumer_Control",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "Copy_Estoque_Atual",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.00:10:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''fatoestoqueatual_pbi'', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
+												"type": "Expression"
+											},
+											"queryTimeout": "00:05:00"
+										},
+										"dataset": {
+											"referenceName": "ds_supabase_etl_consumer_control",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"firstRowOnly": true
+									}
 								}
 							]
 						}
@@ -896,15 +1054,6 @@
 				],
 				"policy": {
 					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"Tabelas_Dimensao": {
-						"type": "array",
-						"defaultValue": [
-							"promos_bees_sv_rca",
-							"fatoestoqueatual_pbi"
-						]
-					}
 				},
 				"folder": {
 					"name": "dimensoes/prod"
@@ -1072,7 +1221,9 @@
 				"annotations": [],
 				"lastPublishTime": "2026-02-10T13:28:23Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/dw_dimensoes_incremental')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_teste')]",
@@ -1178,169 +1329,8 @@
 				"annotations": [],
 				"lastPublishTime": "2026-02-19T15:47:35Z"
 			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimperiodo')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "copy_dimperiodo",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "PostgreSqlV2Source",
-								"query": "SELECT * FROM public.dimperiodo_pbi ORDER BY data;",
-								"queryTimeout": "02:00:00"
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "tabela_periodo_supabase",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "dw_dimperiodo",
-								"type": "DatasetReference",
-								"parameters": {
-									"Nome_Tabela": {
-										"value": "dimperiodo.parquet",
-										"type": "Expression"
-									},
-									"Nome_Pasta": {
-										"value": "dimensoes",
-										"type": "Expression"
-									}
-								}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "periodo"
-				},
-				"annotations": [],
-				"lastPublishTime": "2025-11-10T19:18:25Z"
-			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/tabela_periodo_supabase')]",
-				"[concat(variables('factoryId'), '/datasets/dw_dimperiodo')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_fatopedidorebaixador_v1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy_Fatopedidorebaixador",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.01:30:00",
-							"retry": 2,
-							"retryIntervalInSeconds": 60,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "PostgreSqlV2Source",
-								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatopedidorebaixador_pbi",
-									"type": "Expression"
-								},
-								"queryTimeout": "00:30:00"
-							},
-							"sink": {
-								"type": "ParquetSink",
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings",
-									"copyBehavior": "PreserveHierarchy"
-								},
-								"formatSettings": {
-									"type": "ParquetWriteSettings",
-									"compressionCodec": "snappy"
-								}
-							},
-							"enableStaging": false,
-							"parallelCopies": 4,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "Tabela_fatopedidorebaixador_supabase",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "dw_fatopedidorebaixador",
-								"type": "DatasetReference",
-								"parameters": {
-									"Nome_Arquivo": "fatopedidorebaixador_pbi.parquet",
-									"Nome_Pasta": "fatos"
-								}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "fatopedidorebaixador/pl_antigo"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-01-28T21:13:17Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/dw_fatopedidorebaixador')]"
+				"[concat(variables('factoryId'), '/datasets/dw_dimensoes_teste')]"
 			]
 		}
 	]
