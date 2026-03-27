@@ -91,7 +91,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "Tabelas_dimensao_supabase",
+									"referenceName": "Tabelas_fato_supabase",
 									"type": "DatasetReference",
 									"parameters": {
 										"Nome_Tabela_SB": {
@@ -103,14 +103,14 @@
 							],
 							"outputs": [
 								{
-									"referenceName": "dw_dimensoes",
+									"referenceName": "dw_fato",
 									"type": "DatasetReference",
 									"parameters": {
 										"Nome_Tabela": {
 											"value": "fatoestoqueatual_pbi.parquet",
 											"type": "Expression"
 										},
-										"Nome_Pasta": "dimensoes"
+										"Nome_Pasta": "fatos"
 									}
 								}
 							]
