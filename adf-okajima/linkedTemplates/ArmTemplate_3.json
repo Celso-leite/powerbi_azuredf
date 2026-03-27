@@ -740,7 +740,7 @@
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "pl_dimensoes_est",
+							"referenceName": "pl_fato_est",
 							"type": "PipelineReference"
 						},
 						"parameters": {}

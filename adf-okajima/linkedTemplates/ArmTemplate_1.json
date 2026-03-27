@@ -893,7 +893,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_est')]",
+			"name": "[concat(parameters('factoryName'), '/pl_fato_est')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1056,7 +1056,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "dimensoes/prod"
+					"name": "fatos"
 				},
 				"annotations": [],
 				"lastPublishTime": "2026-02-10T13:29:16Z"

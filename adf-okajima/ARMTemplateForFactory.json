@@ -410,7 +410,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_est')]",
+			"name": "[concat(parameters('factoryName'), '/pl_fato_est')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -573,7 +573,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "dimensoes/prod"
+					"name": "fatos"
 				},
 				"annotations": [],
 				"lastPublishTime": "2026-02-10T13:29:16Z"
@@ -5263,7 +5263,7 @@
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "pl_dimensoes_est",
+							"referenceName": "pl_fato_est",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -5310,7 +5310,7 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_est')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]"
 			]
 		},
 		{
