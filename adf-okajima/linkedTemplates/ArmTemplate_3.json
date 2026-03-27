@@ -737,13 +737,6 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fato_est",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
