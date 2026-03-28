@@ -18,12 +18,6 @@
 			},
 			{
 				"pipelineReference": {
-					"referenceName": "pl_fato_rota",
-					"type": "PipelineReference"
-				}
-			},
-			{
-				"pipelineReference": {
 					"referenceName": "pl_dimensoes_incremental",
 					"type": "PipelineReference"
 				}
