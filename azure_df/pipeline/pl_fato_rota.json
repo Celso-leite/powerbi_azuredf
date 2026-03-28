@@ -1,0 +1,78 @@
+{
+	"name": "pl_fato_rota",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_Fato_Rota",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.01:30:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 60,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"query": {
+							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatorotalog_pbi;",
+							"type": "Expression"
+						},
+						"queryTimeout": "00:30:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"parallelCopies": 4,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Tabelas_fatos_supabase",
+						"type": "DatasetReference",
+						"parameters": {
+							"tabela": {
+								"value": "fatorotalog_pbi",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dw_fatos_ofc_full",
+						"type": "DatasetReference",
+						"parameters": {
+							"tabela": {
+								"value": "fatorotalog_pbi",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "fatos"
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -100,8 +100,7 @@
 					"dimplanopagamento_pbi",
 					"dimfilial_pbi",
 					"promos_bees_sv_rca",
-					"dimmotivodevolucao_pbi",
-					"fatorotalog_pbi"
+					"dimmotivodevolucao_pbi"
 				]
 			}
 		},
