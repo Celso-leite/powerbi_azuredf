@@ -253,8 +253,7 @@
 							"dimplanopagamento_pbi",
 							"dimfilial_pbi",
 							"promos_bees_sv_rca",
-							"dimmotivodevolucao_pbi",
-							"fatorotalog_pbi"
+							"dimmotivodevolucao_pbi"
 						]
 					}
 				},
@@ -1331,6 +1330,92 @@
 				"[concat(variables('factoryId'), '/datasets/Tabelas_fato_supabase')]",
 				"[concat(variables('factoryId'), '/datasets/dw_fato')]",
 				"[concat(variables('factoryId'), '/datasets/ds_supabase_etl_consumer_control')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fato_rota')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_Fato_Rota",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.01:30:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatorotalog_pbi;",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:30:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Tabelas_fatos_supabase",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "fatorotalog_pbi",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dw_fatos_ofc_full",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "fatorotalog_pbi",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "fatos"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Tabelas_fatos_supabase')]",
+				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc_full')]"
 			]
 		},
 		{
@@ -5341,6 +5426,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fato_rota",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -5384,7 +5476,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]"
 			]
 		},
 		{
