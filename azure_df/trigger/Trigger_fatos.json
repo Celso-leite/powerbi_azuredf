@@ -27,6 +27,12 @@
 					"referenceName": "pl_tabelas_preco_pbi",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_fato_est",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
