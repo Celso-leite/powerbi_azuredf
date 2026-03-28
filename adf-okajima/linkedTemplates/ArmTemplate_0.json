@@ -180,6 +180,37 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_fato_supabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela_SB": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().Nome_Tabela_SB",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Tabelas_fatos_supabase')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -597,49 +628,6 @@
 						},
 						"folderPath": {
 							"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
-							"type": "Expression"
-						},
-						"fileSystem": "powerbi"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dw_dimensoes_inc_full')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "DataLake_Oracle",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"Nome_Tabela": {
-						"type": "string"
-					},
-					"anomes": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "ds_dimensoes_dinamico"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@concat(dataset().Nome_Tabela, '_', dataset().anomes, '.parquet')",
-							"type": "Expression"
-						},
-						"folderPath": {
-							"value": "@concat('dimensoes/', dataset().Nome_Tabela)",
 							"type": "Expression"
 						},
 						"fileSystem": "powerbi"
