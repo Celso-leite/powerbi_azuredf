@@ -345,14 +345,6 @@
 						"monthsToProcess": 1,
 						"loadType": "incremental",
 						"usePublicationControl": true
-					},
-					{
-						"tableName": "map_venda_devolucao_pbi",
-						"entityName": "map_venda_devolucao_pbi",
-						"anomesColumn": "",
-						"monthsToProcess": 0,
-						"loadType": "full",
-						"usePublicationControl": false
 					}
 				]
 			}

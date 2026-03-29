@@ -61,13 +61,14 @@ Configuracao atual (`table_configurations`):
 - `fatofaturamento_pbi` | `anomes_faturamento` | `monthsToProcess=2` | `incremental`
 - `fatodevolucao_pbi` | `anomes_devolucao` | `monthsToProcess=2` | `incremental`
 - `fatopedidovenda_pbi` | `anomes_venda` | `monthsToProcess=2` | `incremental`
-- `map_venda_devolucao_pbi` | sem coluna de anomes | `full`
+
+Observacao:
+- `map_venda_devolucao_pbi` foi removida do `pl_fatos` em 28/03/2026 apos descontinuacao no modelo semantico do Power BI.
 
 Tabelas SQL utilizadas (origem):
 - `public.fatofaturamento_pbi`
 - `public.fatodevolucao_pbi`
 - `public.fatopedidovenda_pbi`
-- `public.map_venda_devolucao_pbi`
 
 Regra de meses no incremental:
 - Lookup usa `generate_series` para montar lista mensal ate mes atual.
@@ -85,7 +86,7 @@ Caracteristicas:
 - Retry configurado na copia (`retry=3`, intervalo 180s).
 
 Tabelas SQL utilizadas (origem):
-- Recebe `tableName` do `pl_fatos` (as 4 tabelas listadas acima).
+- Recebe `tableName` do `pl_fatos` para as 3 tabelas fato atualmente ativas no fluxo.
 
 Path de saida:
 - Incremental: `fatos/{tabela}/{tabela}_{anomes}.parquet`
@@ -381,7 +382,6 @@ Tabelas SQL utilizadas nesses pipelines:
 - `public.fatopedidovenda_pbi`
 - `public.fatorotalog_pbi`
 - `public.fv_cliente_rca`
-- `public.map_venda_devolucao_pbi`
 - `public.metaclienteconexao_pbi`
 - `public.metapassagemexpo_pbi`
 - `public.okj_base_expo`

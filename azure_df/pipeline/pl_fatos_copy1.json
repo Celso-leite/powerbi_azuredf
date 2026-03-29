@@ -212,12 +212,6 @@
 						"anomesColumn": "anomes_venda",
 						"monthsToProcess": 1,
 						"loadType": "incremental"
-					},
-					{
-						"tableName": "map_venda_devolucao_pbi",
-						"anomesColumn": "",
-						"monthsToProcess": 0,
-						"loadType": "full"
 					}
 				]
 			}
