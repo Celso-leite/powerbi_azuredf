@@ -122,13 +122,18 @@
 		],
 		"parameters": {
 			"tableName": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "fatodevolucao_pbi"
 			},
 			"anomesColumn": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "anomes_devolucao"
 			},
 			"anomesList": {
-				"type": "array"
+				"type": "array",
+				"defaultValue": [
+					"202603"
+				]
 			}
 		},
 		"folder": {
