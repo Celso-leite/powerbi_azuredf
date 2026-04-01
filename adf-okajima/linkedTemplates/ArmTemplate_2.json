@@ -971,6 +971,158 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatos_process_incremental_partitions_reprocesso')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.anomesList",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Delete_Incremental_Partition",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												},
+												"anomes": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSWriteSettings",
+											"recursive": true
+										}
+									}
+								},
+								{
+									"name": "Copy_Incremental_Partition",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Delete_Incremental_Partition",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.02:00:00",
+										"retry": 3,
+										"retryIntervalInSeconds": 180,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
+												"type": "Expression"
+											},
+											"queryTimeout": "01:00:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "Tabelas_fatos_supabase",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": {
+													"value": "@pipeline().parameters.tableName",
+													"type": "Expression"
+												},
+												"anomes": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"tableName": {
+						"type": "string",
+						"defaultValue": "fatodevolucao_pbi"
+					},
+					"anomesColumn": {
+						"type": "string",
+						"defaultValue": "anomes_devolucao"
+					},
+					"anomesList": {
+						"type": "array",
+						"defaultValue": [
+							"202603"
+						]
+					}
+				},
+				"folder": {
+					"name": "fatos/Reprocesso"
+				},
+				"annotations": [
+					"manual-reprocess-anomes"
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_metas')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -2727,150 +2879,6 @@
 				},
 				"annotations": [],
 				"lastPublishTime": "2026-02-03T20:02:31Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_fatopedidorebaixador_incremental')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Set_Anomes_List",
-						"type": "SetVariable",
-						"dependsOn": [],
-						"policy": {
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "anomes_to_process",
-							"value": {
-								"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(formatDateTime(utcNow(), 'yyyyMM'), formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyyMM')))",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "ForEach_Anomes",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Set_Anomes_List",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@variables('anomes_to_process')",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Copy_Oracle_to_ADLS_Anomes",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.01:30:00",
-										"retry": 2,
-										"retryIntervalInSeconds": 60,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "OracleSource",
-											"oracleReaderQuery": {
-												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOREBAIXADOR_PBI WHERE DATA_ENTRADA_PEDIDO >= TO_DATE(''', item(), ''', ''YYYYMM'') AND DATA_ENTRADA_PEDIDO < ADD_MONTHS(TO_DATE(''', item(), ''', ''YYYYMM''), 1)')",
-												"type": "Expression"
-											},
-											"partitionOption": "None",
-											"queryTimeout": "00:30:00"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings",
-												"compressionCodec": "snappy"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_oracle_query_consulting",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_dynamic_okj",
-											"type": "DatasetReference",
-											"parameters": {
-												"Directory": {
-													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace('OKJ_FATOPEDIDOREBAIXADOR_PBI', 'OKJ_', '')))",
-													"type": "Expression"
-												},
-												"FileName": {
-													"value": "@concat(toLower('OKJ_FATOPEDIDOREBAIXADOR_PBI'), '_', item(), '.parquet')",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "fatos"
-					},
-					"AnomesList": {
-						"type": "array",
-						"defaultValue": []
-					}
-				},
-				"variables": {
-					"anomes_to_process": {
-						"type": "Array"
-					}
-				},
-				"folder": {
-					"name": "fatopedidorebaixador/pl_rebaixador_otimizado"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-05T13:06:45Z"
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]"

@@ -13,6 +13,148 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopedidorebaixador_incremental')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set_Anomes_List",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "anomes_to_process",
+							"value": {
+								"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(formatDateTime(utcNow(), 'yyyyMM'), formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyyMM')))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set_Anomes_List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('anomes_to_process')",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOREBAIXADOR_PBI WHERE DATA_ENTRADA_PEDIDO >= TO_DATE(''', item(), ''', ''YYYYMM'') AND DATA_ENTRADA_PEDIDO < ADD_MONTHS(TO_DATE(''', item(), ''', ''YYYYMM''), 1)')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace('OKJ_FATOPEDIDOREBAIXADOR_PBI', 'OKJ_', '')))",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower('OKJ_FATOPEDIDOREBAIXADOR_PBI'), '_', item(), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"AnomesList": {
+						"type": "array",
+						"defaultValue": []
+					}
+				},
+				"variables": {
+					"anomes_to_process": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "fatopedidorebaixador/pl_rebaixador_otimizado"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-02-05T13:06:45Z"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_fatos')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1143,7 +1285,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1288,7 +1430,9 @@
 				"annotations": [],
 				"lastPublishTime": "2026-02-03T20:53:38Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador_incremental')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
@@ -1296,7 +1440,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1370,7 +1514,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								30
+								45
 							],
 							"hours": [
 								6,
@@ -1453,7 +1597,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								30
+								45
 							],
 							"hours": [
 								0,
