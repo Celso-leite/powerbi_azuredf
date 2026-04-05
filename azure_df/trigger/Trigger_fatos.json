@@ -39,6 +39,12 @@
 					"referenceName": "pl_fato_rota",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_relatorio_verbas_oracle_adls",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
