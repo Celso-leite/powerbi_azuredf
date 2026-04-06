@@ -50,51 +50,9 @@
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "Delete_Incremental_Partition",
-							"type": "Delete",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 1,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"dataset": {
-									"referenceName": "dw_dimensoes_incremental",
-									"type": "DatasetReference",
-									"parameters": {
-										"Nome_Tabela": "dimcabecalhopedidovenda_pbi",
-										"anomes": {
-											"value": "@item().ANOMES_VENDA",
-											"type": "Expression"
-										},
-										"FileSystem": {
-											"value": "@pipeline().parameters.FileSystem",
-											"type": "Expression"
-										}
-									}
-								},
-								"enableLogging": false,
-								"storeSettings": {
-									"type": "AzureBlobFSWriteSettings",
-									"recursive": true
-								}
-							}
-						},
-						{
 							"name": "Copy_Oracle_to_ADLS_Anomes",
 							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "Delete_Incremental_Partition",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "0.01:30:00",
 								"retry": 2,
