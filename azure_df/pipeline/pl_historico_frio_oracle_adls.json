@@ -159,7 +159,7 @@
 			},
 			"EndAnomesExclusive": {
 				"type": "string",
-				"defaultValue": "202301"
+				"defaultValue": "202103"
 			},
 			"FileSystem": {
 				"type": "string",
