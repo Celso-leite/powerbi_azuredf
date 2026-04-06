@@ -2384,7 +2384,7 @@
 							"source": {
 								"type": "OracleSource",
 								"oracleReaderQuery": {
-									"value": "@concat('SELECT DISTINCT CAST(ANOMES_VENDA AS VARCHAR2(6)) AS ANOMES_VENDA FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOVENDA_PBI WHERE ANOMES_VENDA >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_VENDA < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"value": "@concat('SELECT DISTINCT TO_CHAR(DATAVENDA, ''YYYYMM'') AS ANOMES_VENDA FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOVENDA_PBI WHERE DATAVENDA >= TO_DATE(''', pipeline().parameters.StartAnomes, ''', ''YYYYMM'') AND DATAVENDA < TO_DATE(''', pipeline().parameters.EndAnomesExclusive, ''', ''YYYYMM'') ORDER BY 1')",
 									"type": "Expression"
 								},
 								"partitionOption": "None"
@@ -2432,7 +2432,7 @@
 										"source": {
 											"type": "OracleSource",
 											"oracleReaderQuery": {
-												"value": "@concat('SELECT CAST(NUMEROPEDIDO AS NUMBER(19,0)) AS numeropedido, CAST(NUMEROPEDIDORCA AS VARCHAR2(255)) AS numeropedidorca, CAST(NUMEROCARREGAMENTO AS NUMBER(19,0)) AS numerocarregamento, CAST(RCACABECALHO AS NUMBER(19,0)) AS rcacabecalho, CAST(QUANTIDADEITENS AS NUMBER(19,0)) AS quantidadeitens, CAST(CODIGORCAVENDA AS NUMBER(19,0)) AS codigorcavenda, CAST(CODIGOCLIENTE AS NUMBER(19,0)) AS codigocliente, CAST(CODIGOFILIAL AS VARCHAR2(5)) AS codigofilial, CAST(CODIGOPRODUTO AS NUMBER(19,0)) AS codigoproduto, CAST(CODIGOTIPOITEMVENDA AS VARCHAR2(1)) AS codigotipoitemvenda, CAST(CODIGOEMITENTE AS NUMBER(19,0)) AS codigoemitente, CAST(CODIGOFORNECEDOR AS NUMBER(19,0)) AS codigofornecedor, DATAVENDA AS datavenda, CAST(QUANTIDADE AS NUMBER(18,6)) AS quantidade, CAST(VALORST AS NUMBER(18,6)) AS valorst, CAST(PRECOVENDABASETOTAL AS NUMBER(18,6)) AS precovendabasetotal, CAST(VALORUNITARIO AS NUMBER(18,6)) AS valorunitario, CAST(VALORTOTAL AS NUMBER(18,6)) AS valortotal, CAST(VALORUNITARIOBONIFICADO AS NUMBER(18,6)) AS valorunitariobonificado, CAST(QUANTIDADEBONIFICADA AS NUMBER(18,6)) AS quantidadebonificada, CAST(VALORUNITARIOTABELA AS NUMBER(18,6)) AS valorunitariotabela, CAST(VALORUNITARIOCUSTO AS NUMBER(18,6)) AS valorunitariocusto, CAST(PESOUNITARIOLIQUIDO AS NUMBER(18,6)) AS pesounitarioliquido, CAST(PESOUNITARIOBRUTO AS NUMBER(18,6)) AS pesounitariobruto, CAST(VOLUMEUNITARIO AS NUMBER(18,6)) AS volumeunitario, CAST(QUANTIDADEUNITARIAMASTER AS NUMBER(18,6)) AS quantidadeunitariamaster, CAST(QUANTIDADEMASTER AS NUMBER(18,6)) AS quantidademaster, CAST(VALORFRETE AS NUMBER(18,6)) AS valorfrete, CAST(VALOROUTRASDESPESAS AS NUMBER(18,6)) AS valoroutrasdespesas, CAST(PERCENTUALCOMISSAO AS NUMBER(18,6)) AS percentualcomissao, CAST(VALORPENDENTE AS NUMBER(18,6)) AS valorpendente, CAST(NUMEROSEQUENCIALITEM AS NUMBER(19,0)) AS numerosequencialitem, CAST(ANOMES_VENDA AS VARCHAR2(6)) AS anomes_venda, CAST(VALORTOTALCUSTO AS NUMBER(18,6)) AS valortotalcusto FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOVENDA_PBI WHERE ANOMES_VENDA = ''', item().ANOMES_VENDA, '''')",
+												"value": "@concat('SELECT CAST(NUMEROPEDIDO AS NUMBER(19,0)) AS numeropedido, CAST(NUMEROPEDIDORCA AS VARCHAR2(255)) AS numeropedidorca, CAST(NUMEROCARREGAMENTO AS NUMBER(19,0)) AS numerocarregamento, CAST(RCACABECALHO AS NUMBER(19,0)) AS rcacabecalho, CAST(QUANTIDADEITENS AS NUMBER(19,0)) AS quantidadeitens, CAST(CODIGORCAVENDA AS NUMBER(19,0)) AS codigorcavenda, CAST(CODIGOCLIENTE AS NUMBER(19,0)) AS codigocliente, CAST(CODIGOFILIAL AS VARCHAR2(5)) AS codigofilial, CAST(CODIGOPRODUTO AS NUMBER(19,0)) AS codigoproduto, CAST(CODIGOTIPOITEMVENDA AS VARCHAR2(1)) AS codigotipoitemvenda, CAST(CODIGOEMITENTE AS NUMBER(19,0)) AS codigoemitente, CAST(CODIGOFORNECEDOR AS NUMBER(19,0)) AS codigofornecedor, DATAVENDA AS datavenda, CAST(QUANTIDADE AS NUMBER(18,6)) AS quantidade, CAST(VALORST AS NUMBER(18,6)) AS valorst, CAST(PRECOVENDABASETOTAL AS NUMBER(18,6)) AS precovendabasetotal, CAST(VALORUNITARIO AS NUMBER(18,6)) AS valorunitario, CAST(VALORTOTAL AS NUMBER(18,6)) AS valortotal, CAST(VALORUNITARIOBONIFICADO AS NUMBER(18,6)) AS valorunitariobonificado, CAST(QUANTIDADEBONIFICADA AS NUMBER(18,6)) AS quantidadebonificada, CAST(VALORUNITARIOTABELA AS NUMBER(18,6)) AS valorunitariotabela, CAST(VALORUNITARIOCUSTO AS NUMBER(18,6)) AS valorunitariocusto, CAST(PESOUNITARIOLIQUIDO AS NUMBER(18,6)) AS pesounitarioliquido, CAST(PESOUNITARIOBRUTO AS NUMBER(18,6)) AS pesounitariobruto, CAST(VOLUMEUNITARIO AS NUMBER(18,6)) AS volumeunitario, CAST(QUANTIDADEUNITARIAMASTER AS NUMBER(18,6)) AS quantidadeunitariamaster, CAST(QUANTIDADEMASTER AS NUMBER(18,6)) AS quantidademaster, CAST(VALORFRETE AS NUMBER(18,6)) AS valorfrete, CAST(VALOROUTRASDESPESAS AS NUMBER(18,6)) AS valoroutrasdespesas, CAST(PERCENTUALCOMISSAO AS NUMBER(18,6)) AS percentualcomissao, CAST(VALORPENDENTE AS NUMBER(18,6)) AS valorpendente, CAST(NUMEROSEQUENCIALITEM AS NUMBER(19,0)) AS numerosequencialitem, CAST(ANOMES_VENDA AS VARCHAR2(6)) AS anomes_venda, CAST(VALORTOTALCUSTO AS NUMBER(18,6)) AS valortotalcusto FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPEDIDOVENDA_PBI WHERE DATAVENDA >= TO_DATE(''', item().ANOMES_VENDA, ''', ''YYYYMM'') AND DATAVENDA < ADD_MONTHS(TO_DATE(''', item().ANOMES_VENDA, ''', ''YYYYMM''), 1)')",
 												"type": "Expression"
 											},
 											"partitionOption": "None",
@@ -6353,7 +6353,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -6401,7 +6401,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -6459,7 +6459,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -6563,7 +6563,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
