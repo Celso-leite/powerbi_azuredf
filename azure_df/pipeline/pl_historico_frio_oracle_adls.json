@@ -1,0 +1,177 @@
+{
+	"name": "pl_historico_frio_oracle_adls",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute_DimCabecalhoPedido",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_dimcabecalhopedidovenda_historico_oracle_adls",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"SchemaName": {
+							"value": "@pipeline().parameters.SchemaName",
+							"type": "Expression"
+						},
+						"StartAnomes": {
+							"value": "@pipeline().parameters.StartAnomes",
+							"type": "Expression"
+						},
+						"EndAnomesExclusive": {
+							"value": "@pipeline().parameters.EndAnomesExclusive",
+							"type": "Expression"
+						},
+						"FileSystem": {
+							"value": "@pipeline().parameters.FileSystem",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Execute_FatoPedidoVenda",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute_DimCabecalhoPedido",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_fatopedidovenda_historico_oracle_adls",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"SchemaName": {
+							"value": "@pipeline().parameters.SchemaName",
+							"type": "Expression"
+						},
+						"StartAnomes": {
+							"value": "@pipeline().parameters.StartAnomes",
+							"type": "Expression"
+						},
+						"EndAnomesExclusive": {
+							"value": "@pipeline().parameters.EndAnomesExclusive",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Execute_FatoFaturamento",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute_FatoPedidoVenda",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_fatofaturamento_historico_oracle_adls",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"SchemaName": {
+							"value": "@pipeline().parameters.SchemaName",
+							"type": "Expression"
+						},
+						"StartAnomes": {
+							"value": "@pipeline().parameters.StartAnomes",
+							"type": "Expression"
+						},
+						"EndAnomesExclusive": {
+							"value": "@pipeline().parameters.EndAnomesExclusive",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Execute_FatoDevolucao",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute_FatoFaturamento",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_fatodevolucao_historico_oracle_adls",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"SchemaName": {
+							"value": "@pipeline().parameters.SchemaName",
+							"type": "Expression"
+						},
+						"StartAnomes": {
+							"value": "@pipeline().parameters.StartAnomes",
+							"type": "Expression"
+						},
+						"EndAnomesExclusive": {
+							"value": "@pipeline().parameters.EndAnomesExclusive",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"StartAnomes": {
+				"type": "string",
+				"defaultValue": "202101"
+			},
+			"EndAnomesExclusive": {
+				"type": "string",
+				"defaultValue": "202301"
+			},
+			"FileSystem": {
+				"type": "string",
+				"defaultValue": "powerbi"
+			}
+		},
+		"folder": {
+			"name": "historico_frio"
+		},
+		"annotations": [
+			"Orquestrador oficial da carga historica fria Oracle -> ADLS para fatos e cabecalho"
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

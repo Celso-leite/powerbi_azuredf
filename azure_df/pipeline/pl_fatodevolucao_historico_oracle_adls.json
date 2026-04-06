@@ -1,0 +1,178 @@
+{
+	"name": "pl_fatodevolucao_historico_oracle_adls",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup_Anomes_Historico",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": {
+							"value": "@concat('SELECT DISTINCT CAST(ANOMES_DEVOLUCAO AS VARCHAR2(6)) AS ANOMES_DEVOLUCAO FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_DEVOLUCAO < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+							"type": "Expression"
+						},
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_oracle_query_consulting",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_Anomes_Historico",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup_Anomes_Historico').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Delete_Incremental_Partition",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "dw_fatos_ofc",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": "fatodevolucao_pbi",
+										"anomes": {
+											"value": "@item().ANOMES_DEVOLUCAO",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"recursive": true
+								}
+							}
+						},
+						{
+							"name": "Copy_Oracle_to_ADLS_Anomes",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Delete_Incremental_Partition",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.01:30:00",
+								"retry": 2,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "OracleSource",
+									"oracleReaderQuery": {
+										"value": "@concat('SELECT NUMERONOTADEVOLUCAO AS numeronotadevolucao, NUMEROTRANSACAOVENDA AS numerotransacaovenda, NUMEROPEDIDOVENDA AS numeropedidovenda, NUMEROCARREGAMENTO AS numerocarregamento, CAST(TIPODESCARGA AS VARCHAR2(10)) AS tipodescarga, CAST(TIPODEVOLUCAO AS VARCHAR2(50)) AS tipodevolucao, CODIGORCAVENDA AS codigorcavenda, CODIGOFISCAL AS codigofiscal, CODIGOPRODUTO AS codigoproduto, CODIGORCA AS codigorca, CODIGOCLIENTE AS codigocliente, CAST(CODIGOFILIAL AS VARCHAR2(5)) AS codigofilial, CODIGOMOTIVODEVOLUCAO AS codigomotivodevolucao, CODIGOFORNECEDOR AS codigofornecedor, CODIGODEPARTAMENTO AS codigodepartamento, CAST(CODIGOCOBRANCA AS VARCHAR2(10)) AS codigocobranca, DATAVENDA AS datavenda, DATADEVOLUCAO AS datadevolucao, QUANTIDADE AS quantidade, QUANTIDADEBONIFICADA AS quantidadebonificada, QUANTIDADEUNITARIAMASTER AS quantidadeunitariamaster, QUANTIDADEMASTER AS quantidademaster, VALORUNITARIO AS valorunitario, VALORTOTAL AS valortotal, CUSTOUNITARIO AS custounitario, CUSTOTOTAL AS custototal, VALORUNITARIOBONIFICADO AS valorunitariobonificado, VALOROUTRASDESPESAS AS valoroutrasdespesas, VLCMVDEVOL AS vlcmvdevol, VLCMVDEVOLBONIF AS vlcmvdevolbonif, VALORPIS AS valorpis, VALORCOFINS AS valorcofins, VALORIPI AS valoripi, VALORST AS valorst, VALORICMS AS valoricms, PESOLIQUIDOUNITARIO AS pesoliquidounitario, PESOBRUTOUNITARIO AS pesobrutounitario, VOLUMEUNITARIO AS volumeunitario, PESOBRUTOTOTAL AS pesobrutototal, PESOLIQUIDOTOTAL AS pesoliquidototal, NUMEROTRANSACAODEVOLUCAO AS numerotransacaodevolucao, NUMEROITEMTRANSACAODEVOLUCAO AS numeroitemtransacaodevolucao, ANOMES_DEVOLUCAO AS anomes_devolucao FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO = ''', item().ANOMES_DEVOLUCAO, '''')",
+										"type": "Expression"
+									},
+									"partitionOption": "None",
+									"queryTimeout": "00:30:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings",
+										"compressionCodec": "snappy"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_oracle_query_consulting",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_fatos_ofc",
+									"type": "DatasetReference",
+									"parameters": {
+										"tabela": "fatodevolucao_pbi",
+										"anomes": {
+											"value": "@item().ANOMES_DEVOLUCAO",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"StartAnomes": {
+				"type": "string",
+				"defaultValue": "202101"
+			},
+			"EndAnomesExclusive": {
+				"type": "string",
+				"defaultValue": "202301"
+			}
+		},
+		"folder": {
+			"name": "fatos/historico_frio"
+		},
+		"annotations": [
+			"Historico frio Oracle -> ADLS no padrao da tabela fatodevolucao_pbi"
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,190 @@
+{
+	"name": "pl_dimcabecalhopedidovenda_historico_oracle_adls",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup_Anomes_Historico",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "OracleSource",
+						"oracleReaderQuery": {
+							"value": "@concat('SELECT DISTINCT CAST(ANOMES_VENDA AS VARCHAR2(6)) AS ANOMES_VENDA FROM ', pipeline().parameters.SchemaName, '.OKJ_DIMCABECALHOPEDIDOVENDA_PBI WHERE ANOMES_VENDA >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_VENDA < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+							"type": "Expression"
+						},
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_oracle_query_consulting",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_Anomes_Historico",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup_Anomes_Historico').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Delete_Incremental_Partition",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "dw_dimensoes_incremental",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela": "dimcabecalhopedidovenda_pbi",
+										"anomes": {
+											"value": "@item().ANOMES_VENDA",
+											"type": "Expression"
+										},
+										"FileSystem": {
+											"value": "@pipeline().parameters.FileSystem",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"recursive": true
+								}
+							}
+						},
+						{
+							"name": "Copy_Oracle_to_ADLS_Anomes",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Delete_Incremental_Partition",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.01:30:00",
+								"retry": 2,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "OracleSource",
+									"oracleReaderQuery": {
+										"value": "@concat('SELECT NUMEROPEDIDO AS numeropedido, NUMEROPEDIDORCA AS numeropedidorca, CAST(NUMEROCARREGAMENTO AS NUMBER(10,0)) AS numerocarregamento, CAST(NUMERONOTAFISCAL AS NUMBER(10,0)) AS numeronotafiscal, CAST(NUMEROTRANSACAOVENDA AS NUMBER(10,0)) AS numerotransacaovenda, CAST(CODFILIAL AS VARCHAR2(2)) AS codfilial, DATAVENDA AS datavenda, DATAPREVISAOFATURAMENTO AS dataprevisaofaturamento, DATAFATURAMENTO AS datafaturamento, DATACANCELAMENTO AS datacancelamento, DATAENTREGA AS dataentrega, HORA AS hora, MINUTO AS minuto, CAST(SITUACAO AS VARCHAR2(30)) AS situacao, CONDICAOVENDADESCRICAO AS condicaovendadescricao, CAST(CANCELADO AS VARCHAR2(1)) AS cancelado, CAST(TIPOPEDIDO AS VARCHAR2(40)) AS tipopedido, CODIGOTIPOPEDIDO AS codigotipopedido, CONDICAOVENDA AS condicaovenda, OBSERVACAOPEDIDO AS observacaopedido, CAST(TIPOVENDA_NF AS VARCHAR2(10)) AS tipovenda_nf, TIPOVENDA_NF_DESCRICAO AS tipovenda_nf_descricao, CAST(ESPECIE_NF AS VARCHAR2(10)) AS especie_nf, CAST(SERIE_NF AS VARCHAR2(10)) AS serie_nf, CAST(ORIGEMPEDIDO AS VARCHAR2(50)) AS origempedido, ANOMES_VENDA AS anomes_venda FROM ', pipeline().parameters.SchemaName, '.OKJ_DIMCABECALHOPEDIDOVENDA_PBI WHERE ANOMES_VENDA = ''', item().ANOMES_VENDA, '''')",
+										"type": "Expression"
+									},
+									"partitionOption": "None",
+									"queryTimeout": "00:30:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings",
+										"compressionCodec": "snappy"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_oracle_query_consulting",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_dimensoes_incremental",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela": "dimcabecalhopedidovenda_pbi",
+										"anomes": {
+											"value": "@item().ANOMES_VENDA",
+											"type": "Expression"
+										},
+										"FileSystem": {
+											"value": "@pipeline().parameters.FileSystem",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"StartAnomes": {
+				"type": "string",
+				"defaultValue": "202101"
+			},
+			"EndAnomesExclusive": {
+				"type": "string",
+				"defaultValue": "202301"
+			},
+			"FileSystem": {
+				"type": "string",
+				"defaultValue": "powerbi"
+			}
+		},
+		"folder": {
+			"name": "dimensoes/historico_frio"
+		},
+		"annotations": [
+			"Historico frio Oracle -> ADLS no padrao da tabela dimcabecalhopedidovenda_pbi"
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
