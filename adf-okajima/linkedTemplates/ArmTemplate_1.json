@@ -725,13 +725,49 @@
 			"properties": {
 				"activities": [
 					{
+						"name": "Lookup_Publication_State",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:10:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SELECT e.entity_name, COALESCE(p.status, 'MISSING') AS status, COALESCE(p.publication_version, 0) AS publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = 'SUCCESS' AND COALESCE(p.publication_version, 0) > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM (SELECT 'dimensoes_recorrentes'::text AS entity_name) e LEFT JOIN public.etl_publication_control p ON p.entity_name = e.entity_name LEFT JOIN public.etl_consumer_control c ON c.consumer_name = 'adf_powerbi' AND c.entity_name = e.entity_name;",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:05:00"
+							},
+							"dataset": {
+								"referenceName": "ds_supabase_etl_control",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": true
+						}
+					},
+					{
 						"name": "ForEach1",
 						"type": "ForEach",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Lookup_Publication_State",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"userProperties": [],
 						"typeProperties": {
 							"items": {
-								"value": "@pipeline().parameters.Tabelas_Dimensao",
+								"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), pipeline().parameters.Tabelas_Dimensao, createArray())",
 								"type": "Expression"
 							},
 							"isSequential": false,
@@ -803,6 +839,56 @@
 											}
 										}
 									]
+								}
+							]
+						}
+					},
+					{
+						"name": "If_Should_Copy",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "ForEach1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1')",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Lookup_Update_Consumer_Control",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:10:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''dimensoes_recorrentes'', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
+												"type": "Expression"
+											},
+											"queryTimeout": "00:05:00"
+										},
+										"dataset": {
+											"referenceName": "ds_supabase_etl_consumer_control",
+											"type": "DatasetReference",
+											"parameters": {}
+										},
+										"firstRowOnly": true
+									}
 								}
 							]
 						}
