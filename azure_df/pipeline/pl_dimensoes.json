@@ -31,11 +31,101 @@
 				}
 			},
 			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_Publication_State",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), pipeline().parameters.Tabelas_Dimensao, createArray())",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 6,
+					"activities": [
+						{
+							"name": "CopyDimensions",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.01:30:00",
+								"retry": 2,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "PostgreSqlV2Source",
+									"query": {
+										"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+										"type": "Expression"
+									},
+									"queryTimeout": "00:30:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"parallelCopies": 4,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Tabelas_dimensao_supabase",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela_SB": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dw_dimensoes",
+									"type": "DatasetReference",
+									"parameters": {
+										"Nome_Tabela": {
+											"value": "@{concat(item(), '.parquet')}",
+											"type": "Expression"
+										},
+										"Nome_Pasta": "dimensoes"
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
 				"name": "If_Should_Copy",
 				"type": "IfCondition",
 				"dependsOn": [
 					{
-						"activity": "Lookup_Publication_State",
+						"activity": "ForEach1",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -50,99 +140,9 @@
 					"ifFalseActivities": [],
 					"ifTrueActivities": [
 						{
-							"name": "ForEach1",
-							"type": "ForEach",
-							"dependsOn": [],
-							"userProperties": [],
-							"typeProperties": {
-								"items": {
-									"value": "@pipeline().parameters.Tabelas_Dimensao",
-									"type": "Expression"
-								},
-								"isSequential": false,
-								"batchCount": 6,
-								"activities": [
-									{
-										"name": "CopyDimensions",
-										"type": "Copy",
-										"dependsOn": [],
-										"policy": {
-											"timeout": "0.01:30:00",
-											"retry": 2,
-											"retryIntervalInSeconds": 60,
-											"secureOutput": false,
-											"secureInput": false
-										},
-										"userProperties": [],
-										"typeProperties": {
-											"source": {
-												"type": "PostgreSqlV2Source",
-												"query": {
-													"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
-													"type": "Expression"
-												},
-												"queryTimeout": "00:30:00"
-											},
-											"sink": {
-												"type": "ParquetSink",
-												"storeSettings": {
-													"type": "AzureBlobFSWriteSettings"
-												},
-												"formatSettings": {
-													"type": "ParquetWriteSettings"
-												}
-											},
-											"enableStaging": false,
-											"parallelCopies": 4,
-											"translator": {
-												"type": "TabularTranslator",
-												"typeConversion": true,
-												"typeConversionSettings": {
-													"allowDataTruncation": true,
-													"treatBooleanAsNumber": false
-												}
-											}
-										},
-										"inputs": [
-											{
-												"referenceName": "Tabelas_dimensao_supabase",
-												"type": "DatasetReference",
-												"parameters": {
-													"Nome_Tabela_SB": {
-														"value": "@item()",
-														"type": "Expression"
-													}
-												}
-											}
-										],
-										"outputs": [
-											{
-												"referenceName": "dw_dimensoes",
-												"type": "DatasetReference",
-												"parameters": {
-													"Nome_Tabela": {
-														"value": "@{concat(item(), '.parquet')}",
-														"type": "Expression"
-													},
-													"Nome_Pasta": "dimensoes"
-												}
-											}
-										]
-									}
-								]
-							}
-						},
-						{
 							"name": "Lookup_Update_Consumer_Control",
 							"type": "Lookup",
-							"dependsOn": [
-								{
-									"activity": "ForEach1",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
+							"dependsOn": [],
 							"policy": {
 								"timeout": "0.00:10:00",
 								"retry": 1,
