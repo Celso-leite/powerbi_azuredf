@@ -12,7 +12,7 @@
 			},
 			{
 				"pipelineReference": {
-					"referenceName": "pl_dimensoes_oracle_adls3",
+					"referenceName": "pl_rotas_oracle_adls",
 					"type": "PipelineReference"
 				}
 			}

@@ -1,5 +1,5 @@
 {
-	"name": "pl_dimensoes_oracle_adls3",
+	"name": "pl_rotas_oracle_adls",
 	"properties": {
 		"activities": [
 			{
