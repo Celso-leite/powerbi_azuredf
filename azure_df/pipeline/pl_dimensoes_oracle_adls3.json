@@ -9,7 +9,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@pipeline().parameters.Tabelas_Dimensao",
+						"value": "@pipeline().parameters.TableConfigurations",
 						"type": "Expression"
 					},
 					"isSequential": false,
@@ -31,7 +31,7 @@
 								"source": {
 									"type": "OracleSource",
 									"oracleReaderQuery": {
-										"value": "@if(equals(item(), 'OKA_ROTAS_VW'), pipeline().parameters.Query_OKA_ROTAS_VW, concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item()))",
+										"value": "@if(empty(item().QueryOverride), concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().SourceView), item().QueryOverride)",
 										"type": "Expression"
 									},
 									"partitionOption": "None",
@@ -66,7 +66,7 @@
 											"type": "Expression"
 										},
 										"TableName": {
-											"value": "@item()",
+											"value": "@item().SourceView",
 											"type": "Expression"
 										}
 									}
@@ -78,11 +78,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"Directory": {
-											"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace(item(), 'OKJ_', '')))",
+											"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', item().SinkFolder)",
 											"type": "Expression"
 										},
 										"FileName": {
-											"value": "@concat(toLower(item()), '.parquet')",
+											"value": "@item().SinkFileName",
 											"type": "Expression"
 										}
 									}
@@ -94,10 +94,21 @@
 			}
 		],
 		"parameters": {
-			"Tabelas_Dimensao": {
+			"TableConfigurations": {
 				"type": "array",
 				"defaultValue": [
-					"OKA_ROTAS_VW"
+					{
+						"SourceView": "OKJ_DIMROTA_PBI",
+						"SinkFolder": "dimrota_pbi",
+						"SinkFileName": "dimrota_pbi.parquet",
+						"QueryOverride": ""
+					},
+					{
+						"SourceView": "OKJ_DIMROTACOBERTURA_PBI",
+						"SinkFolder": "dimrotacobertura_pbi",
+						"SinkFileName": "dimrotacobertura_pbi.parquet",
+						"QueryOverride": ""
+					}
 				]
 			},
 			"SinkDirectoryRoot": {
@@ -107,10 +118,6 @@
 			"SchemaName": {
 				"type": "string",
 				"defaultValue": "OKAJIMA"
-			},
-			"Query_OKA_ROTAS_VW": {
-				"type": "string",
-				"defaultValue": "SELECT TO_CHAR(CODROTA) AS CODROTA, CAST(ROTA AS VARCHAR2(255 CHAR)) AS ROTA, TO_CHAR(CODROTAPRINC) AS CODROTAPRINC, TO_CHAR(CODUSUR) AS CODUSUR, TO_CHAR(CODCLI) AS CODCLI, TO_CHAR(CODFORNEC) AS CODFORNEC FROM OKAJIMA.OKA_ROTAS_VW"
 			}
 		},
 		"folder": {

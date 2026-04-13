@@ -158,14 +158,20 @@ Path de saida:
 ### 5.2 Pipeline `pl_dimensoes_oracle_adls3` (Oracle -> ADLS)
 
 Copia tabela(s) Oracle para ADLS (atual em producao):
-- Lista default: `OKA_ROTAS_VW`
-- Usa query customizada com `CAST` para padronizar tipos.
+- Configuracao por objeto em `TableConfigurations`
+- Cada item define:
+  - `SourceView`
+  - `SinkFolder`
+  - `SinkFileName`
+  - `QueryOverride` opcional
 
 Tabelas/Views SQL utilizadas (origem Oracle):
-- `OKAJIMA.OKA_ROTAS_VW`
+- `OKAJIMA.OKJ_DIMROTA_PBI`
+- `OKAJIMA.OKJ_DIMROTACOBERTURA_PBI`
 
 Path de saida:
-- `dimensoes/oka_rotas_vw/oka_rotas_vw.parquet`
+- `dimensoes/dimrota_pbi/dimrota_pbi.parquet`
+- `dimensoes/dimrotacobertura_pbi/dimrotacobertura_pbi.parquet`
 
 ### 5.3 Pipeline `pl_dimensoes_incremental` + filho
 
@@ -394,7 +400,8 @@ Tabelas SQL utilizadas nesses pipelines:
 ### 11.2 Oracle
 
 - `OKAJIMA.HITLOREAL_RESULTADOS_VW`
-- `OKAJIMA.OKA_ROTAS_VW`
+- `OKAJIMA.OKJ_DIMROTA_PBI`
+- `OKAJIMA.OKJ_DIMROTACOBERTURA_PBI`
 - `OKAJIMA.OKJ_DIMGRUPOCLIENTES_PBI`
 - `OKAJIMA.OKJ_DIMGRUPOPRODUTOS_PBI`
 - `OKAJIMA.OKJ_FATOPEDIDOREBAIXADOR_PBI`
