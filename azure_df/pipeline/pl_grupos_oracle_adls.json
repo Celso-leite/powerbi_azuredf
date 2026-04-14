@@ -1,5 +1,5 @@
 {
-	"name": "pl_dimensoes_oracle_adls",
+	"name": "pl_grupos_oracle_adls",
 	"properties": {
 		"activities": [
 			{
@@ -94,8 +94,7 @@
 				"type": "array",
 				"defaultValue": [
 					"OKJ_DIMGRUPOCLIENTES_PBI",
-					"OKJ_DIMGRUPOPRODUTOS_PBI",
-					"OKA_ROTAS_VW"
+					"OKJ_DIMGRUPOPRODUTOS_PBI"
 				]
 			},
 			"SinkDirectoryRoot": {
