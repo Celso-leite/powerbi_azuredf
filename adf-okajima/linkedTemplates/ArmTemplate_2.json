@@ -2641,150 +2641,61 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_oracle_adls')]",
+			"name": "[concat(parameters('factoryName'), '/pl_fatodevolucao_historico_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "ForEach_Dimensoes",
-						"type": "ForEach",
+						"name": "Lookup_Anomes_Historico",
+						"type": "Lookup",
 						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
 						"userProperties": [],
 						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.Tabelas_Dimensao",
-								"type": "Expression"
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@concat('SELECT DISTINCT CAST(ANOMES_DEVOLUCAO AS VARCHAR2(6)) AS ANOMES_DEVOLUCAO FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_DEVOLUCAO < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"type": "Expression"
+								},
+								"partitionOption": "None"
 							},
-							"isSequential": false,
-							"batchCount": 5,
-							"activities": [
-								{
-									"name": "Copy_Oracle_to_ADLS",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.01:30:00",
-										"retry": 2,
-										"retryIntervalInSeconds": 60,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "OracleSource",
-											"partitionOption": "None",
-											"queryTimeout": "00:30:00"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_oracle_dynamic",
-											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": {
-													"value": "@pipeline().parameters.SchemaName",
-													"type": "Expression"
-												},
-												"TableName": {
-													"value": "@item()",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_dynamic",
-											"type": "DatasetReference",
-											"parameters": {
-												"Directory": {
-													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace(item(), 'OKJ_', '')))",
-													"type": "Expression"
-												},
-												"FileName": {
-													"value": "@concat(toLower(item()), '.parquet')",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
+							"dataset": {
+								"referenceName": "ds_oracle_query_consulting",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
 						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"Tabelas_Dimensao": {
-						"type": "array",
-						"defaultValue": [
-							"OKJ_DIMGRUPOCLIENTES_PBI",
-							"OKJ_DIMGRUPOPRODUTOS_PBI",
-							"OKA_ROTAS_VW"
-						]
 					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "dimensoes"
-					},
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					}
-				},
-				"folder": {
-					"name": "dimensoes/teste"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-10T13:28:22Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_rotas_oracle_adls')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
 					{
-						"name": "ForEach_Dimensoes",
+						"name": "ForEach_Anomes",
 						"type": "ForEach",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Lookup_Anomes_Historico",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"userProperties": [],
 						"typeProperties": {
 							"items": {
-								"value": "@pipeline().parameters.TableConfigurations",
+								"value": "@activity('Lookup_Anomes_Historico').output.value",
 								"type": "Expression"
 							},
-							"isSequential": false,
-							"batchCount": 5,
+							"isSequential": true,
 							"activities": [
 								{
-									"name": "Copy_Oracle_to_ADLS",
+									"name": "Copy_Oracle_to_ADLS_Anomes",
 									"type": "Copy",
 									"dependsOn": [],
 									"policy": {
@@ -2799,7 +2710,7 @@
 										"source": {
 											"type": "OracleSource",
 											"oracleReaderQuery": {
-												"value": "@if(empty(item().QueryOverride), concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().SourceView), item().QueryOverride)",
+												"value": "@concat('SELECT CAST(NUMERONOTADEVOLUCAO AS NUMBER(19,0)) AS \"numeronotadevolucao\", CAST(NUMEROTRANSACAOVENDA AS NUMBER(19,0)) AS \"numerotransacaovenda\", CAST(NUMEROPEDIDOVENDA AS NUMBER(19,0)) AS \"numeropedidovenda\", CAST(NUMEROCARREGAMENTO AS NUMBER(19,0)) AS \"numerocarregamento\", CAST(TIPODESCARGA AS VARCHAR2(10)) AS \"tipodescarga\", CAST(TIPODEVOLUCAO AS VARCHAR2(50)) AS \"tipodevolucao\", CAST(CODIGORCAVENDA AS NUMBER(19,0)) AS \"codigorcavenda\", CAST(CODIGOFISCAL AS NUMBER(19,0)) AS \"codigofiscal\", CAST(CODIGOPRODUTO AS NUMBER(19,0)) AS \"codigoproduto\", CAST(CODIGORCA AS NUMBER(19,0)) AS \"codigorca\", CAST(CODIGOCLIENTE AS NUMBER(19,0)) AS \"codigocliente\", CAST(CODIGOFILIAL AS VARCHAR2(5)) AS \"codigofilial\", CAST(CODIGOMOTIVODEVOLUCAO AS NUMBER(19,0)) AS \"codigomotivodevolucao\", CAST(CODIGOFORNECEDOR AS NUMBER(19,0)) AS \"codigofornecedor\", CAST(CODIGODEPARTAMENTO AS NUMBER(19,0)) AS \"codigodepartamento\", CAST(CODIGOCOBRANCA AS VARCHAR2(10)) AS \"codigocobranca\", DATAVENDA AS \"datavenda\", DATADEVOLUCAO AS \"datadevolucao\", CAST(QUANTIDADE AS NUMBER(18,6)) AS \"quantidade\", CAST(QUANTIDADEBONIFICADA AS NUMBER(18,6)) AS \"quantidadebonificada\", CAST(QUANTIDADEUNITARIAMASTER AS NUMBER(18,6)) AS \"quantidadeunitariamaster\", CAST(QUANTIDADEMASTER AS NUMBER(18,6)) AS \"quantidademaster\", CAST(VALORUNITARIO AS NUMBER(18,6)) AS \"valorunitario\", CAST(VALORTOTAL AS NUMBER(18,6)) AS \"valortotal\", CAST(CUSTOUNITARIO AS NUMBER(18,6)) AS \"custounitario\", CAST(CUSTOTOTAL AS NUMBER(18,6)) AS \"custototal\", CAST(VALORUNITARIOBONIFICADO AS NUMBER(18,6)) AS \"valorunitariobonificado\", CAST(VALOROUTRASDESPESAS AS NUMBER(18,6)) AS \"valoroutrasdespesas\", CAST(VLCMVDEVOL AS NUMBER(18,6)) AS \"vlcmvdevol\", CAST(VLCMVDEVOLBONIF AS NUMBER(18,6)) AS \"vlcmvdevolbonif\", CAST(VALORPIS AS NUMBER(18,6)) AS \"valorpis\", CAST(VALORCOFINS AS NUMBER(18,6)) AS \"valorcofins\", CAST(VALORIPI AS NUMBER(18,6)) AS \"valoripi\", CAST(VALORST AS NUMBER(18,6)) AS \"valorst\", CAST(VALORICMS AS NUMBER(18,6)) AS \"valoricms\", CAST(PESOLIQUIDOUNITARIO AS NUMBER(18,6)) AS \"pesoliquidounitario\", CAST(PESOBRUTOUNITARIO AS NUMBER(18,6)) AS \"pesobrutounitario\", CAST(VOLUMEUNITARIO AS NUMBER(18,6)) AS \"volumeunitario\", CAST(PESOBRUTOTOTAL AS NUMBER(18,6)) AS \"pesobrutototal\", CAST(PESOLIQUIDOTOTAL AS NUMBER(18,6)) AS \"pesoliquidototal\", CAST(NUMEROTRANSACAODEVOLUCAO AS NUMBER(19,0)) AS \"numerotransacaodevolucao\", CAST(NUMEROITEMTRANSACAODEVOLUCAO AS NUMBER(19,0)) AS \"numeroitemtransacaodevolucao\", CAST(ANOMES_DEVOLUCAO AS VARCHAR2(6)) AS \"anomes_devolucao\" FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO = ''', item().ANOMES_DEVOLUCAO, '''')",
 												"type": "Expression"
 											},
 											"partitionOption": "None",
@@ -2811,7 +2722,8 @@
 												"type": "AzureBlobFSWriteSettings"
 											},
 											"formatSettings": {
-												"type": "ParquetWriteSettings"
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
 											}
 										},
 										"enableStaging": false,
@@ -2826,31 +2738,19 @@
 									},
 									"inputs": [
 										{
-											"referenceName": "ds_oracle_dynamic",
+											"referenceName": "ds_oracle_query_consulting",
 											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": {
-													"value": "@pipeline().parameters.SchemaName",
-													"type": "Expression"
-												},
-												"TableName": {
-													"value": "@item().SourceView",
-													"type": "Expression"
-												}
-											}
+											"parameters": {}
 										}
 									],
 									"outputs": [
 										{
-											"referenceName": "ds_adls_dynamic",
+											"referenceName": "dw_fatos_ofc",
 											"type": "DatasetReference",
 											"parameters": {
-												"Directory": {
-													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', item().SinkFolder)",
-													"type": "Expression"
-												},
-												"FileName": {
-													"value": "@item().SinkFileName",
+												"tabela": "fatodevolucao_pbi",
+												"anomes": {
+													"value": "@item().ANOMES_DEVOLUCAO",
 													"type": "Expression"
 												}
 											}
@@ -2865,40 +2765,177 @@
 					"elapsedTimeMetric": {}
 				},
 				"parameters": {
-					"TableConfigurations": {
-						"type": "array",
-						"defaultValue": [
-							{
-								"SourceView": "OKJ_DIMROTA_PBI",
-								"SinkFolder": "dimrota_pbi",
-								"SinkFileName": "dimrota_pbi.parquet",
-								"QueryOverride": ""
-							},
-							{
-								"SourceView": "OKJ_DIMROTACOBERTURA_PBI",
-								"SinkFolder": "dimrotacobertura_pbi",
-								"SinkFileName": "dimrotacobertura_pbi.parquet",
-								"QueryOverride": ""
-							}
-						]
-					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "dimensoes"
-					},
 					"SchemaName": {
 						"type": "string",
 						"defaultValue": "OKAJIMA"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202101"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202301"
 					}
 				},
 				"folder": {
-					"name": "dimensoes/prod"
+					"name": "fatos/historico_frio"
 				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-10T16:23:10Z"
+				"annotations": [
+					"Historico frio Oracle -> ADLS no padrao da tabela fatodevolucao_pbi"
+				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]"
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatofaturamento_historico_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup_Anomes_Historico",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@concat('SELECT DISTINCT CAST(ANOMES_FATURAMENTO AS VARCHAR2(6)) AS ANOMES_FATURAMENTO FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOFATURAMENTO_PBI WHERE ANOMES_FATURAMENTO >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_FATURAMENTO < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"type": "Expression"
+								},
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_oracle_query_consulting",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Anomes_Historico",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_Anomes_Historico').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT CAST(RCACABECALHO AS NUMBER(19,0)) AS \"rcacabecalho\", CAST(NUMERONOTAVENDA AS NUMBER(19,0)) AS \"numeronotavenda\", CAST(NUMEROPEDIDO AS NUMBER(19,0)) AS \"numeropedido\", CAST(NUMEROTRANSACAOVENDA AS NUMBER(19,0)) AS \"numerotransacaovenda\", CAST(NULL AS VARCHAR2(10)) AS \"especie\", CAST(NULL AS VARCHAR2(10)) AS \"serie\", CAST(CODIGORCAVENDA AS NUMBER(19,0)) AS \"codigorcavenda\", CAST(NUMEROREGIAOMOV AS NUMBER(19,0)) AS \"numeroregiaomov\", CAST(CODIGOPRODUTO AS NUMBER(19,0)) AS \"codigoproduto\", CAST(CODIGOCLIENTE AS NUMBER(19,0)) AS \"codigocliente\", CAST(CODIGOFILIAL AS VARCHAR2(5)) AS \"codigofilial\", CAST(CODIGOAUXILIAR AS NUMBER(19,0)) AS \"codigoauxiliar\", CAST(CODIGOFORNECEDOR AS NUMBER(19,0)) AS \"codigofornecedor\", CAST(NUMEROCARREGAMENTO AS NUMBER(19,0)) AS \"numerocarregamento\", CAST(CODIGOTIPOVENDA AS NUMBER(19,0)) AS \"codigotipovenda\", CAST(CODIGOATIVIDADEMOV AS NUMBER(19,0)) AS \"codigoatividademov\", DATAFATURAMENTO AS \"datafaturamento\", CAST(QUANTIDADE AS NUMBER(18,6)) AS \"quantidade\", CAST(QUANTIDADEBONIFICADA AS NUMBER(18,6)) AS \"quantidadebonificada\", CAST(QUANTIDADECAIXA AS NUMBER(18,6)) AS \"quantidadecaixa\", CAST(QUANTIDADEMASTER AS NUMBER(18,6)) AS \"quantidademaster\", CAST(VALORUNITARIO AS NUMBER(18,6)) AS \"valorunitario\", CAST(VALORUNITARIOBONIFICADO AS NUMBER(18,6)) AS \"valorunitariobonificado\", CAST(VALORUNITARIOTABELA AS NUMBER(18,6)) AS \"valorunitariotabela\", CAST(VALORUNITARIOCUSTO AS NUMBER(18,6)) AS \"valorunitariocusto\", CAST(VALORTOTAL AS NUMBER(18,6)) AS \"valortotal\", CAST(VALORTOTALCUSTO AS NUMBER(18,6)) AS \"valortotalcusto\", CAST(VALORVERBAUNITARIO AS NUMBER(18,6)) AS \"valorverbaunitario\", CAST(VALORFRETE AS NUMBER(18,6)) AS \"valorfrete\", CAST(VALOROUTRASDESPESAS AS NUMBER(18,6)) AS \"valoroutrasdespesas\", CAST(DESCONTOFINANCEIRO AS NUMBER(18,6)) AS \"descontofinanceiro\", CAST(PESOUNITARIOLIQUIDO AS NUMBER(18,6)) AS \"pesounitarioliquido\", CAST(PESOUNITARIOBRUTO AS NUMBER(18,6)) AS \"pesounitariobruto\", CAST(PESOBRUTOTOTAL AS NUMBER(18,6)) AS \"pesobrutototal\", CAST(PESOLIQUIDOTOTAL AS NUMBER(18,6)) AS \"pesoliquidototal\", CAST(VOLUMEUNITARIO AS NUMBER(18,6)) AS \"volumeunitario\", CAST(VALORST AS NUMBER(18,6)) AS \"valorst\", CAST(VALORPIS AS NUMBER(18,6)) AS \"valorpis\", CAST(VALORCOFINS AS NUMBER(18,6)) AS \"valorcofins\", CAST(VALORIPI AS NUMBER(18,6)) AS \"valoripi\", CAST(VALORICMS AS NUMBER(18,6)) AS \"valoricms\", CAST(PERCENTUALCOMISSAO AS NUMBER(10,6)) AS \"percentualcomissao\", CAST(PRAZOMEDIO AS NUMBER(19,0)) AS \"prazomedio\", CAST(NUMEROITEMTRANSACAOVENDA AS NUMBER(19,0)) AS \"numeroitemtransacaovenda\", CAST(ANOMES_FATURAMENTO AS VARCHAR2(6)) AS \"anomes_faturamento\" FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOFATURAMENTO_PBI WHERE ANOMES_FATURAMENTO = ''', item().ANOMES_FATURAMENTO, '''')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": "fatofaturamento_pbi",
+												"anomes": {
+													"value": "@item().ANOMES_FATURAMENTO",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202101"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202301"
+					}
+				},
+				"folder": {
+					"name": "fatos/historico_frio"
+				},
+				"annotations": [
+					"Historico frio Oracle -> ADLS no padrao da tabela fatofaturamento_pbi"
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]"
 			]
 		}
 	]
