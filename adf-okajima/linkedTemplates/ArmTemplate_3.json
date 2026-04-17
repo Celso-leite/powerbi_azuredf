@@ -1859,6 +1859,10 @@
 						"type": "array",
 						"defaultValue": [
 							{
+								"TableName": "OKJ_DIMREGIAOPRECO_PBI",
+								"SinkDirectoryRoot": "dimensoes"
+							},
+							{
 								"TableName": "OKJ_DIMPRECOCLIENTE_PBI",
 								"SinkDirectoryRoot": "dimensoes"
 							},
