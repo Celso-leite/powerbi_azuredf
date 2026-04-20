@@ -1986,7 +1986,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								45
+								40
 							],
 							"hours": [
 								9,
@@ -2302,54 +2302,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -2388,7 +2340,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								45
+								40
 							],
 							"hours": [
 								6,
@@ -2412,6 +2364,54 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								40
+							],
+							"hours": [
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
 			]
 		},
 		{
@@ -2481,7 +2481,7 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								45
+								40
 							],
 							"hours": [
 								0,
