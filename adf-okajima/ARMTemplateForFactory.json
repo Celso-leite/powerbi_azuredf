@@ -2678,7 +2678,7 @@
 								"tableName": "fatofaturamento_pbi",
 								"entityName": "fatofaturamento_pbi",
 								"anomesColumn": "anomes_faturamento",
-								"monthsToProcess": 1,
+								"monthsToProcess": 2,
 								"loadType": "incremental",
 								"usePublicationControl": true
 							},
@@ -2686,7 +2686,7 @@
 								"tableName": "fatodevolucao_pbi",
 								"entityName": "fatodevolucao_pbi",
 								"anomesColumn": "anomes_devolucao",
-								"monthsToProcess": 1,
+								"monthsToProcess": 2,
 								"loadType": "incremental",
 								"usePublicationControl": true
 							},
@@ -2694,7 +2694,7 @@
 								"tableName": "fatopedidovenda_pbi",
 								"entityName": "fatopedidovenda_pbi",
 								"anomesColumn": "anomes_venda",
-								"monthsToProcess": 1,
+								"monthsToProcess": 2,
 								"loadType": "incremental",
 								"usePublicationControl": true
 							}
