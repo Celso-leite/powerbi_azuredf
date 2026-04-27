@@ -180,6 +180,7 @@ Pipeline `pl_dimensoes_incremental`:
   - tabela `public.dimcabecalhopedidovenda_pbi`
   - coluna de particao: `TO_CHAR(datavenda, 'YYYYMM')`
   - `monthsToProcess=2`
+- Calcula a janela mensal pela data local de Sao Paulo (`CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo'`) e retorna apenas `anomes` existentes na tabela de origem. Isso evita gerar parquet vazio do mes seguinte antes da virada local ou quando ainda nao ha linhas no novo mes.
 - Chama `pl_dimensoes_process_incremental_partitions`.
 
 Pipeline filho `pl_dimensoes_process_incremental_partitions`:

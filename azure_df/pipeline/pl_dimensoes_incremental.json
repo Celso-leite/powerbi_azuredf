@@ -41,7 +41,7 @@
 											"source": {
 												"type": "PostgreSqlV2Source",
 												"query": {
-													"value": "@concat('SELECT TO_CHAR(datum, ''YYYYMM'') AS anomes FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum')",
+													"value": "@concat('SELECT DISTINCT ', item().anomesColumn, ' AS anomes FROM ', item().tableName, ' WHERE ', item().anomesColumn, ' BETWEEN TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, ''YYYYMM'') AND TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date), ''YYYYMM'') ORDER BY 1')",
 													"type": "Expression"
 												}
 											},
