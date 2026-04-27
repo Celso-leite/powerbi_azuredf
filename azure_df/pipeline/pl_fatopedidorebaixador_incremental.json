@@ -14,7 +14,7 @@
 				"typeProperties": {
 					"variableName": "anomes_to_process",
 					"value": {
-						"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(formatDateTime(utcNow(), 'yyyyMM'), formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyyMM')))",
+						"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyyMM'), formatDateTime(addToTime(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyy-MM-ddTHH:mm:ss'), -1, 'Month'), 'yyyyMM')))",
 						"type": "Expression"
 					}
 				}

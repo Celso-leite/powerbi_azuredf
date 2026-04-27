@@ -100,8 +100,8 @@ Pipeline controlador com decisao por parametro `LoadType`:
 
 Incremental (`pl_fatopedidorebaixador_incremental`):
 - Se `AnomesList` nao vier preenchida, monta automaticamente:
-  - `yyyyMM` atual (UTC)
-  - `yyyyMM` do mes anterior (UTC)
+  - `yyyyMM` atual no fuso `E. South America Standard Time`
+  - `yyyyMM` do mes anterior no fuso `E. South America Standard Time`
 - Para cada mes, consulta Oracle filtrando `DATA_ENTRADA_PEDIDO` no intervalo do mes.
 
 Full (`pl_fatopedidorebaixador_full`):
