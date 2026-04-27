@@ -38,7 +38,7 @@ Timezone dos agendamentos: `E. South America Standard Time`.
 
 | Trigger | Janela diaria | Pipelines acionados |
 |---|---|---|
-| `Trigger_fatos` | 00:40, 01:40, 06:40 ate 23:40 | `pl_fatos`, `pl_fatopedidorebaixador`, `pl_dimensoes_incremental` |
+| `Trigger_fatos` | 00:45, 06:45 ate 23:45 | `pl_fatos`, `pl_fatopedidorebaixador`, `pl_fatopromocaodesconto`, `pl_dimensoes_incremental`, `pl_tabelas_preco_pbi`, `pl_fato_est`, `pl_fato_rota`, `pl_relatorio_verbas_oracle_adls` |
 | `Trigger_dimensoes` | 09:45, 12:45, 15:45, 18:45, 21:45 | `pl_dimensoes`, `pl_dimensoes_oracle_adls3` |
 | `Trigger_metas` | 09:45, 12:45, 15:45, 18:45, 21:45 | `pl_metas` |
 | `Trigger_CE` | 11:45, 15:45, 18:45 | `pl_hitloreal`, `pl_positivakc_oracle_adls`, `pl_fatotabelapreco_pbi` |
@@ -113,6 +113,29 @@ Tabelas SQL utilizadas (origem Oracle):
 
 Path de saida:
 - `fatos/fatopedidorebaixador_pbi/okj_fatopedidorebaixador_pbi_{anomes}.parquet`
+
+### 4.4 Pipeline `pl_fatopromocaodesconto` (Oracle -> ADLS)
+
+Pipeline controlador com decisao por parametro `LoadType`:
+- `full` -> chama `pl_fatopromocaodesconto_full_2026`
+- default `incremental` -> chama `pl_fatopromocaodesconto_incremental`
+
+Incremental (`pl_fatopromocaodesconto_incremental`):
+- Se `AnomesList` nao vier preenchida, monta automaticamente:
+  - `yyyyMM` atual no fuso `E. South America Standard Time`
+  - `yyyyMM` do mes anterior no fuso `E. South America Standard Time`
+- Para cada mes, consulta Oracle filtrando `DATAVENDA` no intervalo do mes.
+
+Full 2026 (`pl_fatopromocaodesconto_full_2026`):
+- Busca meses distintos de `ANOMES_VENDA` entre `StartAnomes=202601` e
+  `EndAnomesExclusive=202701`.
+- Processa mes a mes e grava um arquivo por mes.
+
+Tabela/View SQL utilizada (origem Oracle):
+- `OKAJIMA.OKJ_FATOPROMOCAODESCONTO_PBI`
+
+Path de saida:
+- `fatos/fatopromocaodesconto_pbi/okj_fatopromocaodesconto_pbi_{anomes}.parquet`
 
 ## 5) Detalhamento do dominio Dimensoes
 
@@ -405,6 +428,7 @@ Tabelas SQL utilizadas nesses pipelines:
 - `OKAJIMA.OKJ_DIMROTACOBERTURA_PBI`
 - `OKAJIMA.OKJ_DIMGRUPOCLIENTES_PBI`
 - `OKAJIMA.OKJ_DIMGRUPOPRODUTOS_PBI`
+- `OKAJIMA.OKJ_FATOPROMOCAODESCONTO_PBI`
 - `OKAJIMA.OKJ_FATOPEDIDOREBAIXADOR_PBI`
 - `OKAJIMA.OKJ_FATOTABELAPRECO_PBI`
 - `OKAJIMA.OKJ_POSITIVAKC_INDICADORES`

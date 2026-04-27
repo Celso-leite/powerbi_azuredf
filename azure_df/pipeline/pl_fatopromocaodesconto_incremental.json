@@ -1,0 +1,176 @@
+{
+	"name": "pl_fatopromocaodesconto_incremental",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set_Anomes_List",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "anomes_to_process",
+					"value": {
+						"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyyMM'), formatDateTime(addToTime(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyy-MM-ddTHH:mm:ss'), -1, 'Month'), 'yyyyMM')))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach_Anomes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set_Anomes_List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('anomes_to_process')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Delete_Anomes_File",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 1,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_adls_dynamic_okj",
+									"type": "DatasetReference",
+									"parameters": {
+										"Directory": {
+											"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+											"type": "Expression"
+										},
+										"FileName": {
+											"value": "@concat('okj_fatopromocaodesconto_pbi_', item(), '.parquet')",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"recursive": true
+								}
+							}
+						},
+						{
+							"name": "Copy_Oracle_to_ADLS_Anomes",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Delete_Anomes_File",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.01:30:00",
+								"retry": 2,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "OracleSource",
+									"oracleReaderQuery": {
+										"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPROMOCAODESCONTO_PBI WHERE DATAVENDA >= TO_DATE(''', item(), ''', ''YYYYMM'') AND DATAVENDA < ADD_MONTHS(TO_DATE(''', item(), ''', ''YYYYMM''), 1)')",
+										"type": "Expression"
+									},
+									"partitionOption": "None",
+									"queryTimeout": "00:30:00"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings",
+										"compressionCodec": "snappy"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_oracle_query_consulting",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adls_dynamic_okj",
+									"type": "DatasetReference",
+									"parameters": {
+										"Directory": {
+											"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+											"type": "Expression"
+										},
+										"FileName": {
+											"value": "@concat('okj_fatopromocaodesconto_pbi_', item(), '.parquet')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SchemaName": {
+				"type": "string",
+				"defaultValue": "OKAJIMA"
+			},
+			"SinkDirectoryRoot": {
+				"type": "string",
+				"defaultValue": "fatos"
+			},
+			"AnomesList": {
+				"type": "array",
+				"defaultValue": []
+			}
+		},
+		"variables": {
+			"anomes_to_process": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "fatopromocaodesconto"
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

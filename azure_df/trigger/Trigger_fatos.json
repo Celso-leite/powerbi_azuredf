@@ -18,6 +18,12 @@
 			},
 			{
 				"pipelineReference": {
+					"referenceName": "pl_fatopromocaodesconto",
+					"type": "PipelineReference"
+				}
+			},
+			{
+				"pipelineReference": {
 					"referenceName": "pl_dimensoes_incremental",
 					"type": "PipelineReference"
 				}
