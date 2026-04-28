@@ -4999,6 +4999,139 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_relatorios_winthor_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Relatorio_Winthor",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableConfigurations",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 4,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().TableName)",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(item().SinkDirectoryRoot, '/', item().SinkTableName)",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item().TableName), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"TableConfigurations": {
+						"type": "array",
+						"defaultValue": [
+							{
+								"TableName": "OKJ_8154_WINTHOR",
+								"SinkDirectoryRoot": "fatos/relatorios_winthor",
+								"SinkTableName": "OKJ_8154_WINTHOR"
+							},
+							{
+								"TableName": "OKJ_8202_WINTHOR",
+								"SinkDirectoryRoot": "fatos/relatorios_winthor",
+								"SinkTableName": "OKJ_8202_WINTHOR"
+							},
+							{
+								"TableName": "OKJ_8325_WINTHOR",
+								"SinkDirectoryRoot": "fatos/relatorios_winthor",
+								"SinkTableName": "OKJ_8325_WINTHOR"
+							},
+							{
+								"TableName": "OKJ_8101_WINTHOR",
+								"SinkDirectoryRoot": "fatos/relatorios_winthor",
+								"SinkTableName": "OKJ_8101_WINTHOR"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "relatorio_rotinas"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic_okj')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_rotas_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -6957,54 +7090,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -7955,136 +8040,53 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_relatorios_winthor_oracle_adls')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"activities": [
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
 					{
-						"name": "ForEach_Relatorio_Winthor",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.TableConfigurations",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"batchCount": 4,
-							"activities": [
-								{
-									"name": "Copy_Oracle_to_ADLS",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.01:30:00",
-										"retry": 2,
-										"retryIntervalInSeconds": 60,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "OracleSource",
-											"oracleReaderQuery": {
-												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().TableName)",
-												"type": "Expression"
-											},
-											"partitionOption": "None",
-											"queryTimeout": "00:30:00"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings",
-												"compressionCodec": "snappy"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_oracle_query_consulting",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_dynamic_okj",
-											"type": "DatasetReference",
-											"parameters": {
-												"Directory": {
-													"value": "@concat(item().SinkDirectoryRoot, '/', item().SinkTableName)",
-													"type": "Expression"
-												},
-												"FileName": {
-													"value": "@concat(toLower(item().TableName), '.parquet')",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								6,
+								9,
+								11,
+								15,
+								18
 							]
 						}
 					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					},
-					"TableConfigurations": {
-						"type": "array",
-						"defaultValue": [
-							{
-								"TableName": "OKJ_8154_WINTHOR",
-								"SinkDirectoryRoot": "fatos/relatorios_winthor",
-								"SinkTableName": "OKJ_8154_WINTHOR"
-							},
-							{
-								"TableName": "OKJ_8202_WINTHOR",
-								"SinkDirectoryRoot": "fatos/relatorios_winthor",
-								"SinkTableName": "OKJ_8202_WINTHOR"
-							},
-							{
-								"TableName": "OKJ_8325_WINTHOR",
-								"SinkDirectoryRoot": "fatos/relatorios_winthor",
-								"SinkTableName": "OKJ_8325_WINTHOR"
-							},
-							{
-								"TableName": "OKJ_8101_WINTHOR",
-								"SinkDirectoryRoot": "fatos/relatorios_winthor",
-								"SinkTableName": "OKJ_8101_WINTHOR"
-							}
-						]
-					}
-				},
-				"folder": {
-					"name": "relatorio_rotinas"
-				},
-				"annotations": []
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic_okj')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
 			]
 		}
 	]
