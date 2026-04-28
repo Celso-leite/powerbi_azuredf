@@ -699,7 +699,7 @@
 													"source": {
 														"type": "PostgreSqlV2Source",
 														"query": {
-															"value": "@concat('SELECT TO_CHAR(datum, ''YYYYMM'') AS anomes FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum')",
+															"value": "@concat('SELECT DISTINCT ', item().anomesColumn, ' AS anomes FROM ', item().tableName, ' WHERE ', item().anomesColumn, ' BETWEEN TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, ''YYYYMM'') AND TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date), ''YYYYMM'') ORDER BY 1')",
 															"type": "Expression"
 														}
 													},
@@ -1985,7 +1985,7 @@
 						"typeProperties": {
 							"variableName": "anomes_to_process",
 							"value": {
-								"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(formatDateTime(utcNow(), 'yyyyMM'), formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyyMM')))",
+								"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyyMM'), formatDateTime(addToTime(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyy-MM-ddTHH:mm:ss'), -1, 'Month'), 'yyyyMM')))",
 								"type": "Expression"
 							}
 						}
@@ -2342,6 +2342,513 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]",
 				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopromocaodesconto')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If_Load_Type",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Execute_Incremental_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopromocaodesconto_incremental",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											},
+											"AnomesList": {
+												"value": "@pipeline().parameters.AnomesList",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Execute_Full_2026_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopromocaodesconto_full_2026",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											},
+											"StartAnomes": {
+												"value": "@pipeline().parameters.StartAnomes",
+												"type": "Expression"
+											},
+											"EndAnomesExclusive": {
+												"value": "@pipeline().parameters.EndAnomesExclusive",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"AnomesList": {
+						"type": "array",
+						"defaultValue": []
+					},
+					"LoadType": {
+						"type": "string",
+						"defaultValue": "incremental"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202601"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202701"
+					}
+				},
+				"folder": {
+					"name": "fatopromocaodesconto"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto_incremental')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto_full_2026')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopromocaodesconto_full_2026')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup_Anomes_2026",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@concat('SELECT DISTINCT CAST(ANOMES_VENDA AS VARCHAR2(6)) AS ANOMES_VENDA FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPROMOCAODESCONTO_PBI WHERE ANOMES_VENDA >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_VENDA < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"type": "Expression"
+								},
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_oracle_query_consulting",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Anomes_2026",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_Anomes_2026').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Delete_Anomes_File",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat('okj_fatopromocaodesconto_pbi_', item().ANOMES_VENDA, '.parquet')",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSWriteSettings",
+											"recursive": true
+										}
+									}
+								},
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Delete_Anomes_File",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPROMOCAODESCONTO_PBI WHERE DATAVENDA >= TO_DATE(''', item().ANOMES_VENDA, ''', ''YYYYMM'') AND DATAVENDA < ADD_MONTHS(TO_DATE(''', item().ANOMES_VENDA, ''', ''YYYYMM''), 1)')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat('okj_fatopromocaodesconto_pbi_', item().ANOMES_VENDA, '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202601"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202701"
+					}
+				},
+				"folder": {
+					"name": "fatopromocaodesconto"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic_okj')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopromocaodesconto_incremental')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Set_Anomes_List",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "anomes_to_process",
+							"value": {
+								"value": "@if(greater(length(pipeline().parameters.AnomesList), 0), pipeline().parameters.AnomesList, createArray(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyyMM'), formatDateTime(addToTime(convertFromUtc(utcNow(), 'E. South America Standard Time', 'yyyy-MM-ddTHH:mm:ss'), -1, 'Month'), 'yyyyMM')))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set_Anomes_List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('anomes_to_process')",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Delete_Anomes_File",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat('okj_fatopromocaodesconto_pbi_', item(), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSWriteSettings",
+											"recursive": true
+										}
+									}
+								},
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Delete_Anomes_File",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.OKJ_FATOPROMOCAODESCONTO_PBI WHERE DATAVENDA >= TO_DATE(''', item(), ''', ''YYYYMM'') AND DATAVENDA < ADD_MONTHS(TO_DATE(''', item(), ''', ''YYYYMM''), 1)')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/fatopromocaodesconto_pbi')",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat('okj_fatopromocaodesconto_pbi_', item(), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"AnomesList": {
+						"type": "array",
+						"defaultValue": []
+					}
+				},
+				"variables": {
+					"anomes_to_process": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "fatopromocaodesconto"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic_okj')]",
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_query_consulting')]"
 			]
 		},
 		{
@@ -3563,6 +4070,7 @@
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "LEGADO - substituido por pl_tabelas_preco_pbi. Manter fora dos triggers de producao.",
 				"activities": [
 					{
 						"name": "Copy_Oracle_to_ADLS",
@@ -3647,7 +4155,10 @@
 				"folder": {
 					"name": "fatotabelapreco"
 				},
-				"annotations": [],
+				"annotations": [
+					"LEGADO_NAO_USAR_PRODUCAO",
+					"SUBSTITUIDO_POR_PL_TABELAS_PRECO_PBI"
+				],
 				"lastPublishTime": "2026-02-06T13:24:43Z"
 			},
 			"dependsOn": [
@@ -6446,6 +6957,282 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rotas_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_grupos_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:45:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								6,
+								7,
+								8,
+								9,
+								10,
+								11,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatos",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatopedidorebaixador",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatopromocaodesconto",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes_incremental",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_tabelas_preco_pbi",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fato_est",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fato_rota",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorio_verbas_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								0,
+								6,
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								19,
+								20,
+								21,
+								22,
+								23
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_metas",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/integrationRuntimeOkajimaWINT')]",
 			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
 			"apiVersion": "2018-06-01",
@@ -7165,271 +7952,6 @@
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas_read')]",
 				"[concat(variables('factoryId'), '/datasets/ds_fato_faturamento_pasta')]",
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_metas",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								9,
-								10,
-								11,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatos",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatopedidorebaixador",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_dimensoes_incremental",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_tabelas_preco_pbi",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fato_est",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fato_rota",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorio_verbas_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								0,
-								6,
-								7,
-								8,
-								9,
-								10,
-								11,
-								12,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								19,
-								20,
-								21,
-								22,
-								23
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_dimensoes",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_rotas_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_grupos_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:45:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								6,
-								7,
-								8,
-								9,
-								10,
-								11,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]"
 			]
 		}
 	]
