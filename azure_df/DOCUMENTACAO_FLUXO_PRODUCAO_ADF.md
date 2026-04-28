@@ -41,7 +41,7 @@ Timezone dos agendamentos: `E. South America Standard Time`.
 | `Trigger_fatos` | 00:45, 06:45 ate 23:45 | `pl_fatos`, `pl_fatopedidorebaixador`, `pl_fatopromocaodesconto`, `pl_dimensoes_incremental`, `pl_tabelas_preco_pbi`, `pl_fato_est`, `pl_fato_rota`, `pl_relatorio_verbas_oracle_adls` |
 | `Trigger_dimensoes` | 09:45, 12:45, 15:45, 18:45, 21:45 | `pl_dimensoes`, `pl_dimensoes_oracle_adls3` |
 | `Trigger_metas` | 09:45, 12:45, 15:45, 18:45, 21:45 | `pl_metas` |
-| `Trigger_CE` | 11:45, 15:45, 18:45 | `pl_hitloreal`, `pl_positivakc_oracle_adls`, `pl_fatotabelapreco_pbi` |
+| `Trigger_CE` | 11:45, 15:45, 18:45 | `pl_hitloreal`, `pl_positivakc_oracle_adls` |
 
 Observacao operacional:
 - Os pipelines listados acima sao o **fluxo oficial em producao** porque estao conectados a triggers `Started`.
@@ -136,6 +136,22 @@ Tabela/View SQL utilizada (origem Oracle):
 
 Path de saida:
 - `fatos/fatopromocaodesconto_pbi/okj_fatopromocaodesconto_pbi_{anomes}.parquet`
+
+### 4.5 Pipeline `pl_tabelas_preco_pbi` (Oracle -> ADLS)
+
+Pipeline oficial para publicacao das tabelas de preco no lake. Executa em
+paralelo sobre `TableConfigurations` e copia cada objeto Oracle para Parquet
+com schema dinamico.
+
+Configuracao atual:
+- `OKJ_DIMREGIAOPRECO_PBI` -> `dimensoes/dimregiaopreco_pbi/okj_dimregiaopreco_pbi.parquet`
+- `OKJ_DIMPRECOCLIENTE_PBI` -> `dimensoes/dimprecocliente_pbi/okj_dimprecocliente_pbi.parquet`
+- `OKJ_FATOTABELAPRECO_PBI` -> `fatos/fatotabelapreco_pbi/okj_fatotabelapreco_pbi.parquet`
+
+Tabelas/views SQL utilizadas (origem Oracle):
+- `OKAJIMA.OKJ_DIMREGIAOPRECO_PBI`
+- `OKAJIMA.OKJ_DIMPRECOCLIENTE_PBI`
+- `OKAJIMA.OKJ_FATOTABELAPRECO_PBI`
 
 ## 5) Detalhamento do dominio Dimensoes
 
@@ -288,17 +304,6 @@ Tabelas SQL utilizadas (origem Oracle):
 - `OKAJIMA.OKJ_POSITIVAKC_RESULTADOS`
 - `OKAJIMA.OKJ_POSITIVAKC_INDICADORES`
 
-### 7.3 `pl_fatotabelapreco_pbi`
-
-- Query Oracle filtrada:
-  - `CODIGOREGIAO IN (12, 50, 51, 52, 53, 54, 55, 56, 57, 70)`
-  - `PRECOTABELA IS NOT NULL`
-- Destino:
-  - `fatos/fatotabelapreco_pbi/okj_fatotabelapreco_pbi.parquet`
-
-Tabela SQL utilizada (origem Oracle):
-- `OKAJIMA.OKJ_FATOTABELAPRECO_PBI`
-
 ## 8) Pipelines existentes fora do fluxo agendado de producao
 
 Pipelines presentes no repositorio, mas nao ligados aos triggers ativos listados na secao 3:
@@ -315,6 +320,7 @@ Pipelines presentes no repositorio, mas nao ligados aos triggers ativos listados
   - `pl_campanha_extra`
 - Legado:
   - `pl_fatopedidorebaixador_v1`
+  - `pl_fatotabelapreco_pbi` (substituido por `pl_tabelas_preco_pbi`)
 - Teste:
   - `pl_dimensoes_oracle_adls` (pasta `dimensoes/teste`)
   - `pl_dimensoes_teste`
@@ -329,6 +335,7 @@ Tabelas SQL utilizadas nesses pipelines:
 - `pl_dimperiodo`: `public.dimperiodo_pbi`.
 - `pl_campanha_extra`: `public.app_campanha_metas_rca`.
 - `pl_fatopedidorebaixador_v1`: `public.fatopedidorebaixador_pbi` (legado).
+- `pl_fatotabelapreco_pbi`: `OKAJIMA.OKJ_FATOTABELAPRECO_PBI` (legado; substituido por `pl_tabelas_preco_pbi`).
 - `pl_dimensoes_oracle_adls` (teste): `OKAJIMA.OKJ_DIMGRUPOCLIENTES_PBI`, `OKAJIMA.OKJ_DIMGRUPOPRODUTOS_PBI`, `OKAJIMA.OKA_ROTAS_VW`.
 - `pl_dimensoes_teste`: default `public.dimcabecalhopedidovenda_pbi_v2` (e pode usar `public.okj_base_expo` se item for `dimcliente_pbi`).
 
@@ -424,6 +431,8 @@ Tabelas SQL utilizadas nesses pipelines:
 ### 11.2 Oracle
 
 - `OKAJIMA.HITLOREAL_RESULTADOS_VW`
+- `OKAJIMA.OKJ_DIMPRECOCLIENTE_PBI`
+- `OKAJIMA.OKJ_DIMREGIAOPRECO_PBI`
 - `OKAJIMA.OKJ_DIMROTA_PBI`
 - `OKAJIMA.OKJ_DIMROTACOBERTURA_PBI`
 - `OKAJIMA.OKJ_DIMGRUPOCLIENTES_PBI`

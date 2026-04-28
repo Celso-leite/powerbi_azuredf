@@ -1,6 +1,7 @@
 {
 	"name": "pl_fatotabelapreco_pbi",
 	"properties": {
+		"description": "LEGADO - substituido por pl_tabelas_preco_pbi. Manter fora dos triggers de producao.",
 		"activities": [
 			{
 				"name": "Copy_Oracle_to_ADLS",
@@ -81,7 +82,10 @@
 		"folder": {
 			"name": "fatotabelapreco"
 		},
-		"annotations": [],
+		"annotations": [
+			"LEGADO_NAO_USAR_PRODUCAO",
+			"SUBSTITUIDO_POR_PL_TABELAS_PRECO_PBI"
+		],
 		"lastPublishTime": "2026-02-06T13:24:43Z"
 	},
 	"type": "Microsoft.DataFactory/factories/pipelines"
