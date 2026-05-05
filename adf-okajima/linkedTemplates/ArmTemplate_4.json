@@ -13,6 +13,242 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_historico_frio_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute_DimCabecalhoPedido",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_dimcabecalhopedidovenda_historico_oracle_adls",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"SchemaName": {
+									"value": "@pipeline().parameters.SchemaName",
+									"type": "Expression"
+								},
+								"StartAnomes": {
+									"value": "@pipeline().parameters.StartAnomes",
+									"type": "Expression"
+								},
+								"EndAnomesExclusive": {
+									"value": "@pipeline().parameters.EndAnomesExclusive",
+									"type": "Expression"
+								},
+								"FileSystem": {
+									"value": "@pipeline().parameters.FileSystem",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Execute_FatoPedidoVenda",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute_DimCabecalhoPedido",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_fatopedidovenda_historico_oracle_adls",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"SchemaName": {
+									"value": "@pipeline().parameters.SchemaName",
+									"type": "Expression"
+								},
+								"StartAnomes": {
+									"value": "@pipeline().parameters.StartAnomes",
+									"type": "Expression"
+								},
+								"EndAnomesExclusive": {
+									"value": "@pipeline().parameters.EndAnomesExclusive",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Execute_FatoFaturamento",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute_FatoPedidoVenda",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_fatofaturamento_historico_oracle_adls",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"SchemaName": {
+									"value": "@pipeline().parameters.SchemaName",
+									"type": "Expression"
+								},
+								"StartAnomes": {
+									"value": "@pipeline().parameters.StartAnomes",
+									"type": "Expression"
+								},
+								"EndAnomesExclusive": {
+									"value": "@pipeline().parameters.EndAnomesExclusive",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Execute_FatoDevolucao",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute_FatoFaturamento",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_fatodevolucao_historico_oracle_adls",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"SchemaName": {
+									"value": "@pipeline().parameters.SchemaName",
+									"type": "Expression"
+								},
+								"StartAnomes": {
+									"value": "@pipeline().parameters.StartAnomes",
+									"type": "Expression"
+								},
+								"EndAnomesExclusive": {
+									"value": "@pipeline().parameters.EndAnomesExclusive",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202101"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202301"
+					},
+					"FileSystem": {
+						"type": "string",
+						"defaultValue": "powerbi"
+					}
+				},
+				"folder": {
+					"name": "historico_frio"
+				},
+				"annotations": [
+					"Orquestrador oficial da carga historica fria Oracle -> ADLS para fatos e cabecalho"
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorios_winthor_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								6,
+								9,
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -75,66 +311,12 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorios_winthor_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								6,
-								9,
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {

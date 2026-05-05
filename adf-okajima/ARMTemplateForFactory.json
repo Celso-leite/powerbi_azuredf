@@ -23,6 +23,10 @@
 			"type": "secureString",
 			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_Portal'"
 		},
+		"PostgreSupabase_rodada_negocio_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_rodada_negocio'"
+		},
 		"DataLake_Oracle_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://datalakeokajimapbi.dfs.core.windows.net/"
@@ -58,6 +62,18 @@
 		"PostgreSupabase_Portal_properties_typeProperties_username": {
 			"type": "string",
 			"defaultValue": "postgres.rpglvgdxaepqtuyeitzo"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-1-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.ncwslqiymeohinhrlbui"
 		}
 	},
 	"variables": {
@@ -7090,6 +7106,87 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PostgreSupabase_rodada_negocio')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_database')]",
+					"username": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('PostgreSupabase_rodada_negocio_password')]"
+					},
+					"sslMode": 3,
+					"authenticationType": "Basic",
+					"trustServerCertificate": true
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorios_winthor_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								45
+							],
+							"hours": [
+								6,
+								9,
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -7161,7 +7258,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -8037,64 +8134,6 @@
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas_read')]",
 				"[concat(variables('factoryId'), '/datasets/ds_fato_faturamento_pasta')]",
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorios_winthor_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								6,
-								9,
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
 			]
 		}
 	]

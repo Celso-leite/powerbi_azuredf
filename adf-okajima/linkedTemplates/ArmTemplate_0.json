@@ -19,6 +19,10 @@
 			"type": "secureString",
 			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_Portal'"
 		},
+		"PostgreSupabase_rodada_negocio_password": {
+			"type": "secureString",
+			"metadata": "Cadeia de caracteres segura para 'password' de 'PostgreSupabase_rodada_negocio'"
+		},
 		"DataLake_Oracle_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://datalakeokajimapbi.dfs.core.windows.net/"
@@ -46,6 +50,18 @@
 		"PostgreSupabase_Portal_properties_typeProperties_username": {
 			"type": "string",
 			"defaultValue": "postgres.rpglvgdxaepqtuyeitzo"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aws-1-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "postgres"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "postgres.ncwslqiymeohinhrlbui"
 		}
 	},
 	"variables": {
@@ -111,6 +127,29 @@
 					},
 					"sslMode": 2,
 					"authenticationType": "Basic"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PostgreSupabase_rodada_negocio')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_database')]",
+					"username": "[parameters('PostgreSupabase_rodada_negocio_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('PostgreSupabase_rodada_negocio_password')]"
+					},
+					"sslMode": 3,
+					"authenticationType": "Basic",
+					"trustServerCertificate": true
 				}
 			},
 			"dependsOn": []
@@ -585,49 +624,6 @@
 						},
 						"folderPath": {
 							"value": "@dataset().Nome_Pasta",
-							"type": "Expression"
-						},
-						"fileSystem": "powerbi"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dw_dimensoes')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "DataLake_Oracle",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"Nome_Tabela": {
-						"type": "string"
-					},
-					"Nome_Pasta": {
-						"type": "string"
-					}
-				},
-				"folder": {
-					"name": "ds_dimensoes_dinamico"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@dataset().Nome_Tabela",
-							"type": "Expression"
-						},
-						"folderPath": {
-							"value": "@concat(dataset().Nome_Pasta, '/', replace(dataset().Nome_Tabela, '.parquet', ''))",
 							"type": "Expression"
 						},
 						"fileSystem": "powerbi"

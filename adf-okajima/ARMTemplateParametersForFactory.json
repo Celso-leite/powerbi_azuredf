@@ -17,6 +17,9 @@
 		"PostgreSupabase_Portal_password": {
 			"value": ""
 		},
+		"PostgreSupabase_rodada_negocio_password": {
+			"value": ""
+		},
 		"DataLake_Oracle_properties_typeProperties_url": {
 			"value": "https://datalakeokajimapbi.dfs.core.windows.net/"
 		},
@@ -43,6 +46,15 @@
 		},
 		"PostgreSupabase_Portal_properties_typeProperties_username": {
 			"value": "postgres.rpglvgdxaepqtuyeitzo"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_server": {
+			"value": "aws-1-sa-east-1.pooler.supabase.com"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_database": {
+			"value": "postgres"
+		},
+		"PostgreSupabase_rodada_negocio_properties_typeProperties_username": {
+			"value": "postgres.ncwslqiymeohinhrlbui"
 		}
 	}
 }
