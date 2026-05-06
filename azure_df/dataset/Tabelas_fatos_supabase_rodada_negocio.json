@@ -1,0 +1,27 @@
+﻿{
+	"name": "Tabelas_fatos_supabase_rodada_negocio",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PostgreSupabase_rodada_negocio",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"tabela": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "ds_fatos_dinamico"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"table": {
+				"value": "@dataset().tabela",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
