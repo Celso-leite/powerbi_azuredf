@@ -5148,6 +5148,224 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_rodada_negocios')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_FatoVendas_RN",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.01:30:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatovendas_rn_pbi;",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:30:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Tabelas_fatos_supabase_rodada_negocio",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "fatovendas_rn_pbi",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dw_fatos_ofc_full",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "fatovendas_rn_pbi",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy_Mechanics_RN",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.01:30:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanics;",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:30:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Tabelas_fatos_supabase_rodada_negocio",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "mechanics",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dw_fatos_ofc_full",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "mechanics",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Copy_MechanicPurchaseHistoryProducts_RN",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.01:30:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": {
+									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanic_purchase_history_products;",
+									"type": "Expression"
+								},
+								"queryTimeout": "00:30:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"parallelCopies": 4,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "Tabelas_fatos_supabase_rodada_negocio",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "mechanic_purchase_history_products",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dw_fatos_ofc_full",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "mechanic_purchase_history_products",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "fatos"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/Tabelas_fatos_supabase_rodada_negocio')]",
+				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc_full')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_rotas_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -5931,6 +6149,37 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_fatos_supabase_rodada_negocio')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_rodada_negocio",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"tabela": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().tabela",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_rodada_negocio')]"
 			]
 		},
 		{
@@ -7315,6 +7564,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rodada_negocios",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -7361,7 +7617,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]"
 			]
 		},
 		{

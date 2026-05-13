@@ -13,6 +13,237 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopedidorebaixador')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If_Load_Type",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Execute_Incremental_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopedidorebaixador_incremental",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											},
+											"AnomesList": {
+												"value": "@pipeline().parameters.AnomesList",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Execute_Full_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopedidorebaixador_full",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"AnomesList": {
+						"type": "array",
+						"defaultValue": []
+					},
+					"LoadType": {
+						"type": "string",
+						"defaultValue": "incremental"
+					}
+				},
+				"folder": {
+					"name": "fatopedidorebaixador/pl_rebaixador_otimizado"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-02-03T20:53:38Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatopromocaodesconto')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If_Load_Type",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Execute_Incremental_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopromocaodesconto_incremental",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											},
+											"AnomesList": {
+												"value": "@pipeline().parameters.AnomesList",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Execute_Full_2026_Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_fatopromocaodesconto_full_2026",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"SchemaName": {
+												"value": "@pipeline().parameters.SchemaName",
+												"type": "Expression"
+											},
+											"SinkDirectoryRoot": {
+												"value": "@pipeline().parameters.SinkDirectoryRoot",
+												"type": "Expression"
+											},
+											"StartAnomes": {
+												"value": "@pipeline().parameters.StartAnomes",
+												"type": "Expression"
+											},
+											"EndAnomesExclusive": {
+												"value": "@pipeline().parameters.EndAnomesExclusive",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "fatos"
+					},
+					"AnomesList": {
+						"type": "array",
+						"defaultValue": []
+					},
+					"LoadType": {
+						"type": "string",
+						"defaultValue": "incremental"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202601"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202701"
+					}
+				},
+				"folder": {
+					"name": "fatopromocaodesconto"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_historico_frio_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -373,6 +604,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rodada_negocios",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -411,7 +649,10 @@
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]"
+			]
 		}
 	]
 }

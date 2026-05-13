@@ -281,6 +281,37 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/Tabelas_fatos_supabase_rodada_negocio')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_rodada_negocio",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"tabela": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "ds_fatos_dinamico"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().tabela",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_rodada_negocio')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Tabelas_tarefas_supabase_portal')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -589,51 +620,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/dw_campanha_extra')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "DataLake_Oracle",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"Nome_Tabela": {
-						"type": "string",
-						"defaultValue": "app_campanha_metas_rca.parquet"
-					},
-					"Nome_Pasta": {
-						"type": "string",
-						"defaultValue": "campanhas_extra/campanha_extra_cupons"
-					}
-				},
-				"folder": {
-					"name": "ds_campanha_extra"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@dataset().Nome_Tabela",
-							"type": "Expression"
-						},
-						"folderPath": {
-							"value": "@dataset().Nome_Pasta",
-							"type": "Expression"
-						},
-						"fileSystem": "powerbi"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
 			]
 		}
 	]

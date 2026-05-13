@@ -13,6 +13,288 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_incremental')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Table",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('table_configurations')",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "If_Load_Type",
+									"type": "IfCondition",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@equals(item().loadType, 'full')",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "Lookup_Get_Anomes",
+												"type": "Lookup",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "PostgreSqlV2Source",
+														"query": {
+															"value": "@concat('SELECT DISTINCT ', item().anomesColumn, ' AS anomes FROM ', item().tableName, ' WHERE ', item().anomesColumn, ' BETWEEN TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, ''YYYYMM'') AND TO_CHAR(DATE_TRUNC(''month'', (CURRENT_TIMESTAMP AT TIME ZONE ''America/Sao_Paulo'')::date), ''YYYYMM'') ORDER BY 1')",
+															"type": "Expression"
+														}
+													},
+													"dataset": {
+														"referenceName": "ds_controle_meses_incrementais",
+														"type": "DatasetReference",
+														"parameters": {}
+													},
+													"firstRowOnly": false
+												}
+											},
+											{
+												"name": "Execute_Incremental_Load_Pipeline",
+												"type": "ExecutePipeline",
+												"dependsOn": [
+													{
+														"activity": "Lookup_Get_Anomes",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_dimensoes_process_incremental_partitions",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"tableName": {
+															"value": "@item().tableName",
+															"type": "Expression"
+														},
+														"anomesColumn": {
+															"value": "@item().anomesColumn",
+															"type": "Expression"
+														},
+														"anomesList": {
+															"value": "@activity('Lookup_Get_Anomes').output.value",
+															"type": "Expression"
+														},
+														"fileSystem": {
+															"value": "@pipeline().parameters.fileSystem",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"fileSystem": {
+						"type": "string",
+						"defaultValue": "powerbi"
+					}
+				},
+				"variables": {
+					"table_configurations": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"tableName": "public.dimcabecalhopedidovenda_pbi",
+								"anomesColumn": "TO_CHAR(datavenda, 'YYYYMM')",
+								"monthsToProcess": 2,
+								"loadType": "incremental"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "dimensoes/prod"
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-02-10T13:28:24Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_fatodevolucao_historico_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup_Anomes_Historico",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@concat('SELECT DISTINCT CAST(ANOMES_DEVOLUCAO AS VARCHAR2(6)) AS ANOMES_DEVOLUCAO FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_DEVOLUCAO < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"type": "Expression"
+								},
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_oracle_query_consulting",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Anomes_Historico",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_Anomes_Historico').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT CAST(NUMERONOTADEVOLUCAO AS NUMBER(19,0)) AS \"numeronotadevolucao\", CAST(NUMEROTRANSACAOVENDA AS NUMBER(19,0)) AS \"numerotransacaovenda\", CAST(NUMEROPEDIDOVENDA AS NUMBER(19,0)) AS \"numeropedidovenda\", CAST(NUMEROCARREGAMENTO AS NUMBER(19,0)) AS \"numerocarregamento\", CAST(TIPODESCARGA AS VARCHAR2(10)) AS \"tipodescarga\", CAST(TIPODEVOLUCAO AS VARCHAR2(50)) AS \"tipodevolucao\", CAST(CODIGORCAVENDA AS NUMBER(19,0)) AS \"codigorcavenda\", CAST(CODIGOFISCAL AS NUMBER(19,0)) AS \"codigofiscal\", CAST(CODIGOPRODUTO AS NUMBER(19,0)) AS \"codigoproduto\", CAST(CODIGORCA AS NUMBER(19,0)) AS \"codigorca\", CAST(CODIGOCLIENTE AS NUMBER(19,0)) AS \"codigocliente\", CAST(CODIGOFILIAL AS VARCHAR2(5)) AS \"codigofilial\", CAST(CODIGOMOTIVODEVOLUCAO AS NUMBER(19,0)) AS \"codigomotivodevolucao\", CAST(CODIGOFORNECEDOR AS NUMBER(19,0)) AS \"codigofornecedor\", CAST(CODIGODEPARTAMENTO AS NUMBER(19,0)) AS \"codigodepartamento\", CAST(CODIGOCOBRANCA AS VARCHAR2(10)) AS \"codigocobranca\", DATAVENDA AS \"datavenda\", DATADEVOLUCAO AS \"datadevolucao\", CAST(QUANTIDADE AS NUMBER(18,6)) AS \"quantidade\", CAST(QUANTIDADEBONIFICADA AS NUMBER(18,6)) AS \"quantidadebonificada\", CAST(QUANTIDADEUNITARIAMASTER AS NUMBER(18,6)) AS \"quantidadeunitariamaster\", CAST(QUANTIDADEMASTER AS NUMBER(18,6)) AS \"quantidademaster\", CAST(VALORUNITARIO AS NUMBER(18,6)) AS \"valorunitario\", CAST(VALORTOTAL AS NUMBER(18,6)) AS \"valortotal\", CAST(CUSTOUNITARIO AS NUMBER(18,6)) AS \"custounitario\", CAST(CUSTOTOTAL AS NUMBER(18,6)) AS \"custototal\", CAST(VALORUNITARIOBONIFICADO AS NUMBER(18,6)) AS \"valorunitariobonificado\", CAST(VALOROUTRASDESPESAS AS NUMBER(18,6)) AS \"valoroutrasdespesas\", CAST(VLCMVDEVOL AS NUMBER(18,6)) AS \"vlcmvdevol\", CAST(VLCMVDEVOLBONIF AS NUMBER(18,6)) AS \"vlcmvdevolbonif\", CAST(VALORPIS AS NUMBER(18,6)) AS \"valorpis\", CAST(VALORCOFINS AS NUMBER(18,6)) AS \"valorcofins\", CAST(VALORIPI AS NUMBER(18,6)) AS \"valoripi\", CAST(VALORST AS NUMBER(18,6)) AS \"valorst\", CAST(VALORICMS AS NUMBER(18,6)) AS \"valoricms\", CAST(PESOLIQUIDOUNITARIO AS NUMBER(18,6)) AS \"pesoliquidounitario\", CAST(PESOBRUTOUNITARIO AS NUMBER(18,6)) AS \"pesobrutounitario\", CAST(VOLUMEUNITARIO AS NUMBER(18,6)) AS \"volumeunitario\", CAST(PESOBRUTOTOTAL AS NUMBER(18,6)) AS \"pesobrutototal\", CAST(PESOLIQUIDOTOTAL AS NUMBER(18,6)) AS \"pesoliquidototal\", CAST(NUMEROTRANSACAODEVOLUCAO AS NUMBER(19,0)) AS \"numerotransacaodevolucao\", CAST(NUMEROITEMTRANSACAODEVOLUCAO AS NUMBER(19,0)) AS \"numeroitemtransacaodevolucao\", CAST(ANOMES_DEVOLUCAO AS VARCHAR2(6)) AS \"anomes_devolucao\" FROM ', pipeline().parameters.SchemaName, '.OKJ_FATODEVOLUCAO_PBI WHERE ANOMES_DEVOLUCAO = ''', item().ANOMES_DEVOLUCAO, '''')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_fatos_ofc",
+											"type": "DatasetReference",
+											"parameters": {
+												"tabela": "fatodevolucao_pbi",
+												"anomes": {
+													"value": "@item().ANOMES_DEVOLUCAO",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202101"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202301"
+					}
+				},
+				"folder": {
+					"name": "fatos/historico_frio"
+				},
+				"annotations": [
+					"Historico frio Oracle -> ADLS no padrao da tabela fatodevolucao_pbi"
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_fatofaturamento_historico_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -2664,243 +2946,6 @@
 				}
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_fatopedidorebaixador')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "If_Load_Type",
-						"type": "IfCondition",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
-								"type": "Expression"
-							},
-							"ifFalseActivities": [
-								{
-									"name": "Execute_Incremental_Pipeline",
-									"type": "ExecutePipeline",
-									"dependsOn": [],
-									"policy": {
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"pipeline": {
-											"referenceName": "pl_fatopedidorebaixador_incremental",
-											"type": "PipelineReference"
-										},
-										"waitOnCompletion": true,
-										"parameters": {
-											"SchemaName": {
-												"value": "@pipeline().parameters.SchemaName",
-												"type": "Expression"
-											},
-											"SinkDirectoryRoot": {
-												"value": "@pipeline().parameters.SinkDirectoryRoot",
-												"type": "Expression"
-											},
-											"AnomesList": {
-												"value": "@pipeline().parameters.AnomesList",
-												"type": "Expression"
-											}
-										}
-									}
-								}
-							],
-							"ifTrueActivities": [
-								{
-									"name": "Execute_Full_Pipeline",
-									"type": "ExecutePipeline",
-									"dependsOn": [],
-									"policy": {
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"pipeline": {
-											"referenceName": "pl_fatopedidorebaixador_full",
-											"type": "PipelineReference"
-										},
-										"waitOnCompletion": true,
-										"parameters": {
-											"SchemaName": {
-												"value": "@pipeline().parameters.SchemaName",
-												"type": "Expression"
-											},
-											"SinkDirectoryRoot": {
-												"value": "@pipeline().parameters.SinkDirectoryRoot",
-												"type": "Expression"
-											}
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "fatos"
-					},
-					"AnomesList": {
-						"type": "array",
-						"defaultValue": []
-					},
-					"LoadType": {
-						"type": "string",
-						"defaultValue": "incremental"
-					}
-				},
-				"folder": {
-					"name": "fatopedidorebaixador/pl_rebaixador_otimizado"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-03T20:53:38Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador_incremental')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador_full')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_fatopromocaodesconto')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "If_Load_Type",
-						"type": "IfCondition",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@equals(toLower(pipeline().parameters.LoadType), 'full')",
-								"type": "Expression"
-							},
-							"ifFalseActivities": [
-								{
-									"name": "Execute_Incremental_Pipeline",
-									"type": "ExecutePipeline",
-									"dependsOn": [],
-									"policy": {
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"pipeline": {
-											"referenceName": "pl_fatopromocaodesconto_incremental",
-											"type": "PipelineReference"
-										},
-										"waitOnCompletion": true,
-										"parameters": {
-											"SchemaName": {
-												"value": "@pipeline().parameters.SchemaName",
-												"type": "Expression"
-											},
-											"SinkDirectoryRoot": {
-												"value": "@pipeline().parameters.SinkDirectoryRoot",
-												"type": "Expression"
-											},
-											"AnomesList": {
-												"value": "@pipeline().parameters.AnomesList",
-												"type": "Expression"
-											}
-										}
-									}
-								}
-							],
-							"ifTrueActivities": [
-								{
-									"name": "Execute_Full_2026_Pipeline",
-									"type": "ExecutePipeline",
-									"dependsOn": [],
-									"policy": {
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"pipeline": {
-											"referenceName": "pl_fatopromocaodesconto_full_2026",
-											"type": "PipelineReference"
-										},
-										"waitOnCompletion": true,
-										"parameters": {
-											"SchemaName": {
-												"value": "@pipeline().parameters.SchemaName",
-												"type": "Expression"
-											},
-											"SinkDirectoryRoot": {
-												"value": "@pipeline().parameters.SinkDirectoryRoot",
-												"type": "Expression"
-											},
-											"StartAnomes": {
-												"value": "@pipeline().parameters.StartAnomes",
-												"type": "Expression"
-											},
-											"EndAnomesExclusive": {
-												"value": "@pipeline().parameters.EndAnomesExclusive",
-												"type": "Expression"
-											}
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "fatos"
-					},
-					"AnomesList": {
-						"type": "array",
-						"defaultValue": []
-					},
-					"LoadType": {
-						"type": "string",
-						"defaultValue": "incremental"
-					},
-					"StartAnomes": {
-						"type": "string",
-						"defaultValue": "202601"
-					},
-					"EndAnomesExclusive": {
-						"type": "string",
-						"defaultValue": "202701"
-					}
-				},
-				"folder": {
-					"name": "fatopromocaodesconto"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto_incremental')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto_full_2026')]"
-			]
 		}
 	]
 }

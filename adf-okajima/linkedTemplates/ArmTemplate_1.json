@@ -25,6 +25,49 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/dw_campanha_extra')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DataLake_Oracle",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Nome_Tabela": {
+						"type": "string",
+						"defaultValue": "app_campanha_metas_rca.parquet"
+					},
+					"Nome_Pasta": {
+						"type": "string",
+						"defaultValue": "campanhas_extra/campanha_extra_cupons"
+					}
+				},
+				"folder": {
+					"name": "ds_campanha_extra"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().Nome_Tabela",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().Nome_Pasta",
+							"type": "Expression"
+						},
+						"fileSystem": "powerbi"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/dw_dimensoes')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -757,7 +800,9 @@
 				"annotations": [],
 				"lastPublishTime": "2025-11-10T19:18:25Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/dw_campanha_extra')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_dimensoes')]",
@@ -964,144 +1009,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/dw_dimensoes')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_cabecalho_full')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Lookup_Get_All_Anomes",
-						"type": "Lookup",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "PostgreSqlV2Source",
-								"query": {
-									"value": "@concat('SELECT DISTINCT TO_CHAR(datavenda, ''YYYYMM'') AS anomes FROM ', pipeline().parameters.tableName, ' WHERE datavenda IS NOT NULL ORDER BY 1')",
-									"type": "Expression"
-								}
-							},
-							"dataset": {
-								"referenceName": "ds_controle_meses_incrementais",
-								"type": "DatasetReference",
-								"parameters": {}
-							},
-							"firstRowOnly": false
-						}
-					},
-					{
-						"name": "ForEach_Anomes",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Lookup_Get_All_Anomes",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Lookup_Get_All_Anomes').output.value",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"batchCount": 10,
-							"activities": [
-								{
-									"name": "Copy_Historical_Partition",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.01:30:00",
-										"retry": 3,
-										"retryIntervalInSeconds": 180,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "PostgreSqlV2Source",
-											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
-												"type": "Expression"
-											},
-											"queryTimeout": "01:00:00"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "Tabelas_dimensao_supabase",
-											"type": "DatasetReference",
-											"parameters": {
-												"Nome_Tabela_SB": {
-													"value": "@pipeline().parameters.tableName",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "dw_dimensoes_inc_full",
-											"type": "DatasetReference",
-											"parameters": {
-												"Nome_Tabela": {
-													"value": "@{last(split(pipeline().parameters.tableName, '.'))}",
-													"type": "Expression"
-												},
-												"anomes": {
-													"value": "@item().anomes",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"tableName": {
-						"type": "string",
-						"defaultValue": "dimcabecalhopedidovenda_pbi"
-					}
-				},
-				"folder": {
-					"name": "dimensoes/prod"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-02-10T13:28:22Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/dw_dimensoes_inc_full')]"
 			]
 		}
 	]
