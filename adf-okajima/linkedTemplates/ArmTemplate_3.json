@@ -13,6 +13,161 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_dimcabecalhopedidovenda_historico_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Lookup_Anomes_Historico",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@concat('SELECT DISTINCT CAST(ANOMES_VENDA AS VARCHAR2(6)) AS ANOMES_VENDA FROM ', pipeline().parameters.SchemaName, '.OKJ_DIMCABECALHOPEDIDOVENDA_PBI WHERE ANOMES_VENDA >= ''', pipeline().parameters.StartAnomes, ''' AND ANOMES_VENDA < ''', pipeline().parameters.EndAnomesExclusive, ''' ORDER BY 1')",
+									"type": "Expression"
+								},
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_oracle_query_consulting",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach_Anomes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup_Anomes_Historico",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_Anomes_Historico').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS_Anomes",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT NUMEROPEDIDO AS \"numeropedido\", NUMEROPEDIDORCA AS \"numeropedidorca\", CAST(NUMEROCARREGAMENTO AS NUMBER(10,0)) AS \"numerocarregamento\", CAST(NUMERONOTAFISCAL AS NUMBER(10,0)) AS \"numeronotafiscal\", CAST(NUMEROTRANSACAOVENDA AS NUMBER(10,0)) AS \"numerotransacaovenda\", CAST(CODFILIAL AS VARCHAR2(2)) AS \"codfilial\", DATAVENDA AS \"datavenda\", DATAPREVISAOFATURAMENTO AS \"dataprevisaofaturamento\", DATAFATURAMENTO AS \"datafaturamento\", DATACANCELAMENTO AS \"datacancelamento\", DATAENTREGA AS \"dataentrega\", HORA AS \"hora\", MINUTO AS \"minuto\", CAST(SITUACAO AS VARCHAR2(30)) AS \"situacao\", CONDICAOVENDADESCRICAO AS \"condicaovendadescricao\", CAST(CANCELADO AS VARCHAR2(1)) AS \"cancelado\", CAST(TIPOPEDIDO AS VARCHAR2(40)) AS \"tipopedido\", CODIGOTIPOPEDIDO AS \"codigotipopedido\", CONDICAOVENDA AS \"condicaovenda\", OBSERVACAOPEDIDO AS \"observacaopedido\", CAST(TIPOVENDA_NF AS VARCHAR2(10)) AS \"tipovenda_nf\", TIPOVENDA_NF_DESCRICAO AS \"tipovenda_nf_descricao\", CAST(ESPECIE_NF AS VARCHAR2(10)) AS \"especie_nf\", CAST(SERIE_NF AS VARCHAR2(10)) AS \"serie_nf\", CAST(ORIGEMPEDIDO AS VARCHAR2(50)) AS \"origempedido\", ANOMES_VENDA AS \"anomes_venda\" FROM ', pipeline().parameters.SchemaName, '.OKJ_DIMCABECALHOPEDIDOVENDA_PBI WHERE ANOMES_VENDA = ''', item().ANOMES_VENDA, '''')",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "dw_dimensoes_incremental",
+											"type": "DatasetReference",
+											"parameters": {
+												"Nome_Tabela": "dimcabecalhopedidovenda_pbi",
+												"anomes": {
+													"value": "@item().ANOMES_VENDA",
+													"type": "Expression"
+												},
+												"FileSystem": {
+													"value": "@pipeline().parameters.FileSystem",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"StartAnomes": {
+						"type": "string",
+						"defaultValue": "202101"
+					},
+					"EndAnomesExclusive": {
+						"type": "string",
+						"defaultValue": "202301"
+					},
+					"FileSystem": {
+						"type": "string",
+						"defaultValue": "powerbi"
+					}
+				},
+				"folder": {
+					"name": "dimensoes/historico_frio"
+				},
+				"annotations": [
+					"Historico frio Oracle -> ADLS no padrao da tabela dimcabecalhopedidovenda_pbi"
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_dimensoes_incremental')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1396,7 +1551,7 @@
 															"source": {
 																"type": "PostgreSqlV2Source",
 																"query": {
-																	"value": "@concat('SELECT e.entity_name, COALESCE(p.status, ''MISSING'') AS status, COALESCE(p.publication_version, 0) AS publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = ''SUCCESS'' AND COALESCE(p.publication_version, 0) > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM (SELECT ''', item().entityName, '''::text AS entity_name) e LEFT JOIN public.etl_publication_control p ON p.entity_name = e.entity_name LEFT JOIN public.etl_consumer_control c ON c.consumer_name = ''adf_powerbi'' AND c.entity_name = e.entity_name')",
+																	"value": "@concat('SELECT e.entity_name, COALESCE(p.status, ''MISSING'') AS status, COALESCE(p.publication_version, 0) AS publication_version, p.run_id, COALESCE(NULLIF(trim(both '','' from translate(p.target_ref::text, chr(34) || ''[] '', '''')), ''''), (SELECT string_agg(TO_CHAR(datum, ''YYYYMM''), '','' ORDER BY datum) FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum)) AS target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = ''SUCCESS'' AND COALESCE(p.publication_version, 0) > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM (SELECT ''', item().entityName, '''::text AS entity_name) e LEFT JOIN public.etl_publication_control p ON p.entity_name = e.entity_name LEFT JOIN public.etl_consumer_control c ON c.consumer_name = ''adf_powerbi'' AND c.entity_name = e.entity_name')",
 																	"type": "Expression"
 																}
 															},
@@ -1409,8 +1564,8 @@
 														}
 													},
 													{
-														"name": "If_Should_Copy",
-														"type": "IfCondition",
+														"name": "Execute_Incremental_Load_Pipeline",
+														"type": "ExecutePipeline",
 														"dependsOn": [
 															{
 																"activity": "Lookup_Publication_State",
@@ -1419,79 +1574,65 @@
 																]
 															}
 														],
+														"policy": {
+															"secureInput": false
+														},
 														"userProperties": [],
 														"typeProperties": {
-															"expression": {
-																"value": "@equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1')",
-																"type": "Expression"
+															"pipeline": {
+																"referenceName": "pl_fatos_process_incremental_partitions",
+																"type": "PipelineReference"
 															},
-															"ifTrueActivities": [
-																{
-																	"name": "Execute_Incremental_Load_Pipeline",
-																	"type": "ExecutePipeline",
-																	"dependsOn": [],
-																	"policy": {
-																		"secureInput": false
-																	},
-																	"userProperties": [],
-																	"typeProperties": {
-																		"pipeline": {
-																			"referenceName": "pl_fatos_process_incremental_partitions",
-																			"type": "PipelineReference"
-																		},
-																		"waitOnCompletion": true,
-																		"parameters": {
-																			"tableName": {
-																				"value": "@item().tableName",
-																				"type": "Expression"
-																			},
-																			"anomesColumn": {
-																				"value": "@item().anomesColumn",
-																				"type": "Expression"
-																			},
-																			"anomesList": {
-																				"value": "@split(activity('Lookup_Publication_State').output.firstRow.target_ref, ',')",
-																				"type": "Expression"
-																			}
-																		}
-																	}
+															"waitOnCompletion": true,
+															"parameters": {
+																"tableName": {
+																	"value": "@item().tableName",
+																	"type": "Expression"
 																},
-																{
-																	"name": "Lookup_Update_Consumer_Control",
-																	"type": "Lookup",
-																	"dependsOn": [
-																		{
-																			"activity": "Execute_Incremental_Load_Pipeline",
-																			"dependencyConditions": [
-																				"Succeeded"
-																			]
-																		}
-																	],
-																	"policy": {
-																		"timeout": "0.12:00:00",
-																		"retry": 0,
-																		"retryIntervalInSeconds": 30,
-																		"secureOutput": false,
-																		"secureInput": false
-																	},
-																	"userProperties": [],
-																	"typeProperties": {
-																		"source": {
-																			"type": "PostgreSqlV2Source",
-																			"query": {
-																				"value": "@concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''', item().entityName, ''', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version')",
-																				"type": "Expression"
-																			}
-																		},
-																		"dataset": {
-																			"referenceName": "ds_supabase_etl_consumer_control",
-																			"type": "DatasetReference",
-																			"parameters": {}
-																		},
-																		"firstRowOnly": true
-																	}
+																"anomesColumn": {
+																	"value": "@item().anomesColumn",
+																	"type": "Expression"
+																},
+																"anomesList": {
+																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), split(activity('Lookup_Publication_State').output.firstRow.target_ref, ','), createArray())",
+																	"type": "Expression"
 																}
-															]
+															}
+														}
+													},
+													{
+														"name": "Lookup_Update_Consumer_Control",
+														"type": "Lookup",
+														"dependsOn": [
+															{
+																"activity": "Execute_Incremental_Load_Pipeline",
+																"dependencyConditions": [
+																	"Succeeded"
+																]
+															}
+														],
+														"policy": {
+															"timeout": "0.12:00:00",
+															"retry": 0,
+															"retryIntervalInSeconds": 30,
+															"secureOutput": false,
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"source": {
+																"type": "PostgreSqlV2Source",
+																"query": {
+																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''', item().entityName, ''', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version'), concat('SELECT ', string(activity('Lookup_Publication_State').output.firstRow.last_consumed_version), ' AS last_consumed_version'))",
+																	"type": "Expression"
+																}
+															},
+															"dataset": {
+																"referenceName": "ds_supabase_etl_consumer_control",
+																"type": "DatasetReference",
+																"parameters": {}
+															},
+															"firstRowOnly": true
 														}
 													}
 												]
@@ -2896,54 +3037,6 @@
 				},
 				"annotations": [],
 				"lastPublishTime": "2025-11-20T15:11:28Z"
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_metas",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								45
-							],
-							"hours": [
-								7,
-								8,
-								9,
-								10,
-								11,
-								12,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
 			},
 			"dependsOn": []
 		}
