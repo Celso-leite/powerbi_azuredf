@@ -12,7 +12,7 @@
 						"value": "@variables('table_configurations')",
 						"type": "Expression"
 					},
-					"isSequential": true,
+					"isSequential": false,
 					"activities": [
 						{
 							"name": "Switch_Load_Mode",
