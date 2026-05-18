@@ -2,7 +2,7 @@
 	"name": "Trigger_dimensoes",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Started",
+		"runtimeState": "Stopped",
 		"pipelines": [
 			{
 				"pipelineReference": {
@@ -32,7 +32,7 @@
 				"timeZone": "E. South America Standard Time",
 				"schedule": {
 					"minutes": [
-						30
+						48
 					],
 					"hours": [
 						6,
