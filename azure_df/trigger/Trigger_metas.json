@@ -2,7 +2,7 @@
 	"name": "Trigger_metas",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
@@ -20,7 +20,7 @@
 				"timeZone": "E. South America Standard Time",
 				"schedule": {
 					"minutes": [
-						45
+						30
 					],
 					"hours": [
 						7,
