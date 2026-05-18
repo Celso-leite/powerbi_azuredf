@@ -7616,114 +7616,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorios_winthor_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								48
-							],
-							"hours": [
-								6,
-								9,
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_metas",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								48
-							],
-							"hours": [
-								7,
-								8,
-								9,
-								10,
-								11,
-								12,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/integrationRuntimeOkajimaWINT')]",
 			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
 			"apiVersion": "2018-06-01",
@@ -8629,6 +8521,114 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_metas",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								50
+							],
+							"hours": [
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorios_winthor_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								44
+							],
+							"hours": [
+								6,
+								9,
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
 			]
 		}
 	]
