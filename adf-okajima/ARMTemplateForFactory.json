@@ -1231,7 +1231,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "SELECT * FROM public.fatoestoqueatual_pbi;",
+												"value": "SELECT codigofilial, faixadiassemvenda, foralinha, id, mesesvencimento, precoporembalagem, situacao, codigodepartamento, codigofornecedor, codigomarca, codigomotivodevolucao, codigoproduto, codigoregiao, diasatevencimento, diassemcompra, diassemvenda, custocontabiltotal, custocontabilunitario, custofinanceirototal, custofinanceirounitario, custoproximacompra, custorealtotal, custorealunitario, custoreposicaototal, custoreposicaounitario, custoultimaentrada, custoultimaentradaunitario, estoqueideal, estoquependentecompra, girodia, pesobrutototal, pesobrutounitario, pesoliquidototal, pesoliquidounitario, prazoentrega, quantidadeavaria, quantidadebloqueada, quantidadedisponivel, quantidadeestoquecaixa, quantidadegerencial, quantidadependente, quantidadereservada, quantidadeultimaentrada, quantidadeunitaria, quantidadeunitariacaixa, temporeposicao, valorultimaentradatotal, valorultimaentradaunitario, valorvendatotal, valorvendatotal_gerencial, valorvendatotalcomtransito, valorvendatotalcomtransito_gerencial, valorvendaunitario, volumetotal, volumeunitario, TO_CHAR(dataultimacompra, 'YYYY-MM-DD') AS dataultimacompra, TO_CHAR(dataultimavenda, 'YYYY-MM-DD') AS dataultimavenda FROM public.fatoestoqueatual_pbi;",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -1360,7 +1360,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SELECT * FROM public.fatorotalog_pbi;",
+									"value": "SELECT id, descricao, tipo_descricao, codfilial, codrota, codrotaprincipal, numcar, perc_frete, valor, valor_tabela_frete, TO_CHAR(datamon, 'YYYY-MM-DD') AS datamon, TO_CHAR(dtfat, 'YYYY-MM-DD') AS dtfat FROM public.fatorotalog_pbi;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -5407,7 +5407,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SELECT * FROM public.fatovendas_rn_pbi;",
+									"value": "SELECT codigo_pasta, codigocombo_bees, mecanica, modalidade_mecanica, observacao, status_venda, codfornecprinc, codigocliente, codigoclienteprincipal, codigomecanica, codigomecanicaprincipal, codigosorteio, numerovenda_promessa, ordem_status_venda, quantidadebrindes_mecanica, quantidadecupons_mecanica, quantidadecupons_total, quantidademecanica, quantidadevendas, valorcombo_mecanica, valorconfirmado, valorpendente, valortotal, TO_CHAR(datavenda, 'YYYY-MM-DD') AS datavenda FROM public.fatovendas_rn_pbi;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
