@@ -18,7 +18,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -37,9 +37,12 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								50
+								49
 							],
 							"hours": [
+								4,
+								5,
+								6,
 								7,
 								8,
 								9,
@@ -533,7 +536,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -569,6 +572,8 @@
 								48
 							],
 							"hours": [
+								4,
+								5,
 								6,
 								7,
 								8,
@@ -595,7 +600,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
+				"runtimeState": "Started",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -670,10 +675,12 @@
 						"timeZone": "E. South America Standard Time",
 						"schedule": {
 							"minutes": [
-								44
+								45
 							],
 							"hours": [
 								0,
+								4,
+								5,
 								6,
 								7,
 								8,
