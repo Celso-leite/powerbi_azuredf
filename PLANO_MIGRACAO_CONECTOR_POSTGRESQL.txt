@@ -338,6 +338,141 @@ Total: 18 arquivos
   - Apos a migracao, monitorar Service Health > Health Advisories no portal
     Azure para receber notificacoes sobre futuras deprecacoes de conectores
 
+7. PONTOS ADICIONAIS - REVISAO CONTRA DOCUMENTACAO OFICIAL (18/05/2026)
+================================================================================
+
+Revisao realizada apos execucao dos ajustes. Fonte: documentacao Microsoft Learn
+para Azure Data Factory PostgreSqlV2 (atualizada fev/abr 2026).
+
+--- 7.1 CONFIRMACOES ---
+
+Os seguintes pontos do plano foram confirmados pela documentacao oficial:
+
+  - commandTimeout e propriedade valida e documentada para PostgreSqlV2 Linked
+    Service. Descricao oficial: "The time to wait (in seconds) while trying to
+    execute a command before terminating the attempt and generating an error.
+    Set to zero for infinity."
+
+  - queryTimeout no Copy Source tem precedencia sobre commandTimeout: "If both
+    commandTimeout and queryTimeout are configured, queryTimeout takes
+    precedence." (confirmado pela doc)
+
+  - O campo "version" nao pertence ao PostgreSqlV2 Linked Service; esta correto
+    nao adiciona-lo.
+
+  - trustServerCertificate e propriedade valida e documentada; preservar em
+    PostgreSupabase_rodada_negocio.json esta correto.
+
+  - A remocao do SET statement_timeout das queries e a correcao adequada; o
+    conector V2 nao suporta queries compostas (multiplas instrucoes na mesma
+    string).
+
+--- 7.2 PONTO CRITICO - DECIMAL (PRECISION > 28) NAO SUPORTADO NO V2 ---
+
+A documentacao explicita que o tipo Decimal com precisao acima de 28 e
+UNSUPPORTED no conector V2:
+
+  PostgreSqlV2: Decimal (Precision > 28) -> NAO SUPORTADO
+  PostgreSqlV1: Decimal (Precision > 28) -> String
+
+  A alternativa documentada e usar to_char() na query para converter o campo
+  para String antes da copia:
+    Exemplo: to_char(coluna_numeric, 'FM999999999999999999.99')
+
+  Risco: se alguma view/tabela usada pelos pipelines possuir colunas NUMERIC
+  com precisao > 28, a Copy Activity falhara ou gerara valores nulos sem erro
+  explicito, dependendo do contexto.
+
+  ACAO OBRIGATORIA ANTES DO REPROCESSAMENTO:
+  Executar a query abaixo no Supabase para auditar colunas afetadas:
+
+    SELECT table_name, column_name, data_type, numeric_precision, numeric_scale
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND data_type IN ('numeric', 'decimal')
+      AND numeric_precision > 28
+    ORDER BY table_name, column_name;
+
+  Se retornar linhas, aplicar to_char() nas queries correspondentes antes de
+  reprocessar as particoes corrompidas.
+
+--- 7.3 MUDANCAS DE MAPEAMENTO DE TIPO QUE PERSISTEM APOS A CORRECAO DO SET ---
+
+Estas alteracoes sao do conector V2 em si e ocorrem independentemente da
+correcao do SET statement_timeout. Podem ser causa adicional ou complementar
+dos valores absurdos observados nas particoes corrompidas:
+
+  Tipo PostgreSQL         | V1 (interim type) | V2 (interim type)
+  ----------------------- | ----------------- | -----------------
+  Money                   | String            | Decimal
+  Timestamp with timezone | String            | DateTime
+  Time with timezone      | String            | DateTimeOffset
+  Interval                | String            | TimeSpan
+
+  Impacto pratico:
+  - Colunas Money agora chegam como Decimal no Parquet. Se havia logica no
+    Power Query ou DAX que tratava Money como String (ex: conversoes manuais,
+    replace de simbolo de moeda), pode necessitar ajuste.
+  - Timestamp with timezone agora e DateTime; verificar se os dados de data/hora
+    com fuso chegam corretamente no modelo semantico.
+
+  ACAO: apos o reprocessamento das particoes 202604 e 202605, validar as colunas
+  de tipo Money e Timestamp with timezone nas tabelas de fato e dimensao.
+
+--- 7.4 TIPO DE DATASET - DÍVIDA TECNICA ---
+
+A documentacao indica que datasets do tipo RelationalTable (V1) e sources do
+tipo RelationalSource (V1) continuam funcionando no conector V2, mas estao
+marcados como "still supported as-is, while you are suggested to use the new
+one going forward."
+
+  Tipos antigos (V1, funcionam mas nao recomendados):
+    Dataset: RelationalTable
+    Source:  RelationalSource
+
+  Tipos novos (V2, recomendados):
+    Dataset: PostgreSqlV2Table
+    Source:  PostgreSqlV2Source
+
+  Nao e bloqueante para o incidente atual; pode ser corrigido oportunisticamente
+  em uma sprint futura para eliminar a dependencia de compatibilidade.
+
+--- 7.5 SINAL DE VALIDACAO POS-PUBLISH - autoUpgrade ---
+
+O ADF registra no output de cada Copy Activity se a atividade foi
+automaticamente migrada pelo Automatic Connector Upgrade:
+
+  "source": {
+      "type": "PostgreSqlV2",
+      "autoUpgrade": "true"
+  }
+
+  Apos a publicacao da correcao, esse campo NAO deve mais aparecer nos logs das
+  execucoes. Se "autoUpgrade": "true" ainda aparecer em alguma atividade, indica
+  que aquela atividade nao recebeu a correcao corretamente.
+
+  Usar como checklist de validacao pos-Publish: inspecionar o output das
+  atividades de Copy nas primeiras execucoes apos a migracao.
+
+--- 7.6 REQUISITO DE VERSAO DO POSTGRESQL ---
+
+O conector PostgreSqlV2 suporta apenas PostgreSQL versao 12 e acima. O Supabase
+atual opera em PostgreSQL 15+, portanto nao ha risco. Registrado aqui para
+referencia em eventuais migrações futuras de ambiente.
+
+--- 7.7 SENSIBILIDADE A MAIUSCULAS EM NOMES DE SCHEMA/TABELA ---
+
+A documentacao alerta: "Schema and table names are case-sensitive. Enclose them
+in double quotes in the query."
+
+  Nas queries existentes os nomes estao em letras minusculas e sem aspas duplas
+  (ex: SELECT * FROM public.fatoestoqueatual_pbi), o que e seguro pois o
+  PostgreSQL faz fold para lowercase em identificadores nao citados entre aspas.
+
+  Risco residual: se existir alguma query com nomes de tabela em CamelCase sem
+  aspas duplas, ela pode falhar. Verificar oportunisticamente ao revisar queries
+  do pl_metas.json e outros pipelines com queries estaticas.
+
 ================================================================================
 FIM DO PLANO
 ================================================================================

@@ -18,7 +18,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "SELECT * FROM public.fatorotalog_pbi;",
+							"value": "SELECT id, descricao, tipo_descricao, codfilial, codrota, codrotaprincipal, numcar, perc_frete, valor, valor_tabela_frete, TO_CHAR(datamon, 'YYYY-MM-DD') AS datamon, TO_CHAR(dtfat, 'YYYY-MM-DD') AS dtfat FROM public.fatorotalog_pbi;",
 							"type": "Expression"
 						},
 						"queryTimeout": "00:30:00"
