@@ -600,7 +600,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
+												"value": "@concat('SELECT numeropedido, numeropedidorca, numerocarregamento, numeronotafiscal, numerotransacaovenda, codfilial, TO_CHAR(datavenda, ''YYYY-MM-DD'') AS datavenda, TO_CHAR(dataprevisaofaturamento, ''YYYY-MM-DD'') AS dataprevisaofaturamento, TO_CHAR(datafaturamento, ''YYYY-MM-DD'') AS datafaturamento, TO_CHAR(datacancelamento, ''YYYY-MM-DD'') AS datacancelamento, TO_CHAR(dataentrega, ''YYYY-MM-DD'') AS dataentrega, hora, minuto, situacao, condicaovendadescricao, cancelado, tipopedido, codigotipopedido, condicaovenda, observacaopedido, tipovenda_nf, tipovenda_nf_descricao, especie_nf, serie_nf, origempedido, anomes_venda FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -889,7 +889,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+												"value": "@if(equals(last(split(pipeline().parameters.tableName, '.')), 'dimcabecalhopedidovenda_pbi'), concat('SELECT numeropedido, numeropedidorca, numerocarregamento, numeronotafiscal, numerotransacaovenda, codfilial, TO_CHAR(datavenda, ''YYYY-MM-DD'') AS datavenda, TO_CHAR(dataprevisaofaturamento, ''YYYY-MM-DD'') AS dataprevisaofaturamento, TO_CHAR(datafaturamento, ''YYYY-MM-DD'') AS datafaturamento, TO_CHAR(datacancelamento, ''YYYY-MM-DD'') AS datacancelamento, TO_CHAR(dataentrega, ''YYYY-MM-DD'') AS dataentrega, hora, minuto, situacao, condicaovendadescricao, cancelado, tipopedido, codigotipopedido, condicaovenda, observacaopedido, tipovenda_nf, tipovenda_nf_descricao, especie_nf, serie_nf, origempedido, anomes_venda FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, ''''), concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, ''''))",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
