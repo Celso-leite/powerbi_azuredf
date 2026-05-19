@@ -30,7 +30,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item())",
+										"value": "@concat('SELECT * FROM public.', item())",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00"

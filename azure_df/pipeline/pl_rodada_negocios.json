@@ -18,7 +18,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatovendas_rn_pbi;",
+							"value": "SELECT * FROM public.fatovendas_rn_pbi;",
 							"type": "Expression"
 						},
 						"queryTimeout": "00:30:00"
@@ -84,7 +84,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanics;",
+							"value": "SELECT * FROM public.mechanics;",
 							"type": "Expression"
 						},
 						"queryTimeout": "00:30:00"
@@ -150,7 +150,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanic_purchase_history_products;",
+							"value": "SELECT * FROM public.mechanic_purchase_history_products;",
 							"type": "Expression"
 						},
 						"queryTimeout": "00:30:00"

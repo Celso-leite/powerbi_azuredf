@@ -1,0 +1,343 @@
+================================================================================
+PLANO DE MIGRACAO - CONECTOR POSTGRESQL ADF
+Data: 18/05/2026
+Autor: Celso Okajima
+Contexto: Incidente de corrupcao de dados relacionado a mudanca no conector PostgreSQL
+================================================================================
+
+
+1. PROBLEMA RAIZ
+================================================================================
+
+O Azure Data Factory possui um recurso chamado Automatic Connector Upgrade que
+pode migrar conectores antigos para versoes mais novas em modo de
+compatibilidade, dependendo do conector, do Integration Runtime e do cenario.
+
+No ambiente atual, os 3 Linked Services PostgreSQL usam o tipo PostgreSqlV2.
+Para este tipo de Linked Service, a documentacao atual da Microsoft nao lista
+o campo "version" como propriedade valida. O campo "version": "2.0" aparece no
+conector AzurePostgreSql, que e um tipo diferente de conector.
+
+Assim, a correcao NAO deve adicionar "version" aos Linked Services
+PostgreSqlV2. O ponto fragil a corrigir e o uso de queries compostas
+"SET statement_timeout; SELECT ...", deixando o timeout nas propriedades
+documentadas do ADF: queryTimeout no Copy source e commandTimeout no Linked
+Service.
+
+O comportamento observado no conector atual quebrou dois pontos:
+
+  a) Queries compostas com "SET statement_timeout; SELECT ..."
+     O novo conector embulha a query do usuario em subconsultas para extrair
+     metadados, quebrando instrucoes compostas. Isso fez com que colunas
+     existentes fossem reportadas como inexistentes (ex: "column anomes_venda
+     does not exist") e datas fossem retornadas como null.
+
+  b) Serializacao de tipos de dados no Parquet
+     Campos date do PostgreSQL passaram a ser serializados com tipo incorreto,
+     gerando valores nulos em datas e valores monetarios inflados (trilhoes).
+
+Resultado: particoes 202605 e 202604 corrompidas nos arquivos Parquet do
+Data Lake com 100% de datas em branco e valores absurdos.
+
+Nota tecnica:
+  - PostgreSqlV2Source suporta queryTimeout no source da Copy Activity.
+  - PostgreSqlV2 Linked Service suporta commandTimeout.
+  - Quando queryTimeout e commandTimeout coexistem, queryTimeout tem
+    precedencia para a query da Copy Activity.
+
+
+2. ESTADO ATUAL DOS ARQUIVOS
+================================================================================
+
+--- 2.1 LINKED SERVICES ---
+
+Arquivo: azure_df/linkedService/PostgreSupabase.json
+  Tipo:             PostgreSqlV2
+  Campo "version":  AUSENTE (esperado para PostgreSqlV2; nao adicionar)
+  commandTimeout:   1800 (ja configurado - 30 minutos)
+  Problema:         commandTimeout abaixo do timeout historico usado nos fatos
+                    (2400s). Os Copy sources ja possuem queryTimeout de 1h,
+                    que tem precedencia na execucao da query.
+
+Arquivo: azure_df/linkedService/PostgreSupabase_Portal.json
+  Tipo:             PostgreSqlV2
+  Campo "version":  AUSENTE (esperado para PostgreSqlV2; nao adicionar)
+  commandTimeout:   AUSENTE
+  Problema:         Sem commandTimeout no Linked Service. Os pipelines de
+                    tarefas ja possuem queryTimeout de 30 min no source.
+
+Arquivo: azure_df/linkedService/PostgreSupabase_rodada_negocio.json
+  Tipo:             PostgreSqlV2
+  Campo "version":  AUSENTE (esperado para PostgreSqlV2; nao adicionar)
+  commandTimeout:   AUSENTE
+  Problema:         Sem commandTimeout no Linked Service. Tem
+                    trustServerCertificate:true que deve ser preservado.
+
+--- 2.2 PIPELINES COM SET statement_timeout ---
+
+O SET statement_timeout e uma instrucao PostgreSQL para definir timeout de query.
+O novo conector nao suporta instrucoes compostas (SET + SELECT na mesma string).
+A correcao e remover o SET das queries e usar os timeouts documentados do ADF:
+queryTimeout no PostgreSqlV2Source e commandTimeout no Linked Service.
+
+Os timeouts usados nos pipelines sao:
+  - 1800000ms = 1800 segundos (30 min) - dimensoes, metas, tarefas, rodada
+  - 2400000ms = 2400 segundos (40 min) - fatos e dimensoes incrementais
+
+Observacao sobre o estado atual:
+  - A maioria dos Copy sources ja possui queryTimeout configurado.
+  - Fatos e dimensoes incrementais usam queryTimeout de 01:00:00.
+  - Metas usam queryTimeout de 02:00:00.
+  - Tarefas, rodada e varias cargas menores usam queryTimeout de 00:30:00.
+  - Portanto, o ajuste principal das queries e remover o SET; o
+    commandTimeout do Linked Service e uma configuracao complementar.
+
+PIPELINES CRITICOS (rodam em producao ativamente):
+
+  pl_fatos_process_incremental_partitions.json
+    Ocorrencias: 1
+    Query atual: "@concat('SET statement_timeout = ''2400000''; SELECT * FROM
+                  public.', pipeline().parameters.tableName, ' WHERE ',
+                  pipeline().parameters.anomesColumn, ' = ''', item(), '''')"
+    Correcao:    Remover "SET statement_timeout = ''2400000''; " do concat
+
+  pl_fatos_process_incremental_partitions_reprocesso.json
+    Ocorrencias: 1
+    Mesmo padrao do anterior. Necessario para reprocessar 202605.
+
+  pl_dimensoes.json
+    Ocorrencias: 1 (expressao @if com SET em ambos os branches)
+    Correcao:    Remover SET de ambos os branches da expressao @if
+
+  pl_dimensoes_process_incremental_partitions.json
+    Ocorrencias: 1
+    Mesmo padrao de fatos (2400000ms).
+
+  pl_dimensoes_cabecalho_full.json
+    Ocorrencias: 1
+    Mesmo padrao (2400000ms).
+
+  pl_fatos_carga_historica.json
+    Ocorrencias: 1
+    Usado em reprocessamentos historicos.
+
+  pl_fato_est.json
+    Ocorrencias: 1
+    Query estatica: "SET statement_timeout = '1800000'; SELECT * FROM
+                     public.fatoestoqueatual_pbi;"
+    Correcao:    Remover prefixo SET.
+
+  pl_fato_rota.json
+    Ocorrencias: 1
+    Query estatica: "SET statement_timeout = '1800000'; SELECT * FROM
+                     public.fatorotalog_pbi;"
+    Correcao:    Remover prefixo SET.
+
+  pl_rodada_negocios.json
+    Ocorrencias: 3
+    Tabelas: fatovendas_rn_pbi, mechanics, mechanic_purchase_history_products
+    Correcao:    Remover prefixo SET das 3 queries estaticas.
+
+  pl_tarefas_stg_portal.json
+    Ocorrencias: 4
+    Tabelas: okj_tarefas, okj_tarefas_prod, okj_tarefas_rcas, okj_tarefas_cli
+    Correcao:    Remover prefixo SET das 4 queries.
+
+PIPELINE DE ALTA COMPLEXIDADE:
+
+  pl_metas.json
+    Ocorrencias: ~35 queries estaticas individuais
+    Todas seguem o padrao: "SET statement_timeout = '1800000'; SELECT id, ..."
+    Tabelas afetadas:
+      fatometacategoria_pbi, fatometacliente_pbi, fatometadepartamento_pbi,
+      fatometafornecedor_pbi, fatometaproduto_pbi, fatometarca_pbi,
+      fatometamarca_pbi, fatometagrupoprod_pbi, fatometasecao_pbi,
+      fatometafornecedorpex_pbi, fatometagrupoprodpex_pbi, fatometaprodutopex_pbi,
+      fatometaclientepex_pbi, fatometacliprodpex_pbi, fatometacligrupoprod_pbi,
+      fatometafornecedorextra_pbi, fatometaprodutoextra_pbi, fatometaclienteextra_pbi,
+      fatometagrupoprodextra_pbi, fatometaclientecnx_pbi, fatometasuperfechamento_pbi,
+      fatometacliprod_pbi, fatometageral_pbi, fatometageralfornec_pbi,
+      fatometasemanapasta_pbi, fatometasemanaregiao_pbi, fatometageralfornecddd_pbi,
+      fatometaprevsemanal_pbi, fatometabaseexpo_pbi, fatometaprodutox_pbi,
+      fatometarcaextra_pbi, fatometaexpo_pbi, metapassagemexpo_pbi,
+      metaclienteconexao_pbi, fatometaprodutox_pbi
+    Correcao:    Remover "SET statement_timeout = '1800000'; " de cada query.
+                 Padrao fixo, pode ser feito com search-replace controlado.
+
+PIPELINES SECUNDARIOS (provavelmente inativos em producao):
+
+  pl_dimensoes_teste.json         - 1 ocorrencia (pipeline de teste)
+  pl_fatopedidorebaixador_v1.json - 1 ocorrencia (versao deprecated)
+  pl_fatos_process_incremental_partitions_copy1.json - 1 ocorrencia (copia)
+  pl_metas_copy1.json             - 1 ocorrencia (copia)
+
+
+3. O QUE DEVE SER FEITO
+================================================================================
+
+--- ETAPA 1: CORRIGIR LINKED SERVICES ---
+
+PostgreSupabase.json
+  - Adicionar: "commandTimeout": 2400
+    (aumentar de 1800 para cobrir pipelines de fatos que usam 2400s)
+  - Nota: nao adicionar campo "version"; ele nao e propriedade documentada
+    para Linked Service do tipo PostgreSqlV2.
+  - Observacao: nos Copy sources que ja possuem queryTimeout, esse valor tem
+    precedencia sobre commandTimeout para a execucao da query.
+
+PostgreSupabase_Portal.json
+  - Adicionar: "commandTimeout": 1800
+  - Pipelines que usam este LS (tarefas_portal) usam timeout de 1800s
+  - Nao adicionar campo "version" ao Linked Service PostgreSqlV2
+
+PostgreSupabase_rodada_negocio.json
+  - Adicionar: "commandTimeout": 1800
+  - Pipelines que usam este LS (rodada_negocios) usam timeout de 1800s
+  - Manter: "trustServerCertificate": true (ja existe, nao alterar)
+  - Nao adicionar campo "version" ao Linked Service PostgreSqlV2
+
+--- ETAPA 2: CORRIGIR PIPELINES CRITICOS ---
+
+Regra geral de correcao:
+  ANTES: "SET statement_timeout = '1800000'; SELECT * FROM public.tabela"
+  DEPOIS: "SELECT * FROM public.tabela"
+
+  ANTES: "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.',
+          pipeline().parameters.tableName, ...)"
+  DEPOIS: "@concat('SELECT * FROM public.', pipeline().parameters.tableName, ...)"
+
+Ordem de execucao:
+  1. pl_fatos_process_incremental_partitions.json        (1 ocorrencia)
+  2. pl_fatos_process_incremental_partitions_reprocesso.json (1 ocorrencia)
+  3. pl_fatos_carga_historica.json                       (1 ocorrencia)
+  4. pl_dimensoes.json                                   (1 ocorrencia - expressao @if)
+  5. pl_dimensoes_process_incremental_partitions.json    (1 ocorrencia)
+  6. pl_dimensoes_cabecalho_full.json                    (1 ocorrencia)
+  7. pl_fato_est.json                                    (1 ocorrencia)
+  8. pl_fato_rota.json                                   (1 ocorrencia)
+  9. pl_rodada_negocios.json                             (3 ocorrencias)
+  10. pl_tarefas_stg_portal.json                         (4 ocorrencias)
+  11. pl_metas.json                                      (~35 ocorrencias)
+
+--- ETAPA 3: COMMIT E PUBLICACAO ---
+
+  1. git add dos arquivos alterados
+  2. git commit com mensagem descritiva
+  3. git push para o repositorio remoto
+  4. Abrir ADF Studio > Manage > Source Control > Publish
+  5. Confirmar que todos os artefatos foram publicados sem erro
+
+Observacao importante sobre templates ARM:
+  - Os arquivos em adf-okajima/ARMTemplateForFactory.json e
+    adf-okajima/linkedTemplates/*.json tambem contem copias das queries com
+    SET statement_timeout.
+  - Se o fluxo oficial de deploy for ADF Git + Publish, nao editar esses
+    templates manualmente; eles devem ser regenerados pelo Publish depois da
+    correcao nos artefatos em azure_df/.
+  - Se o deploy for feito diretamente por ARM template, garantir que os
+    templates publicados foram regenerados antes da implantacao.
+
+--- ETAPA 4: VALIDACAO ---
+
+Executar manualmente com escopo pequeno para confirmar que o conector funciona:
+  1. pl_dimensoes com 1 tabela simples (ex: dimrca_pbi)
+  2. pl_fatos_process_incremental_partitions com anomes 202603 (mes validado)
+     Verificar: nao ha erro TransparentMigrationSourceReadFailed
+     Verificar: datas chegam preenchidas no Parquet
+
+--- ETAPA 5: REPROCESSAMENTO DE DADOS CORROMPIDOS ---
+
+Apos validacao, disparar pipelines para reprocessar partições corrompidas:
+
+  5.1 dimcabecalhopedidovenda / anomes 202604
+      - Menor volume, comecar por aqui
+      - Verificar: DataVenda e DataFaturamento preenchidas
+
+  5.2 Faturamento / anomes 202605
+      - Verificar: valores na faixa de R$ 30-40 milhoes (nao trilhoes)
+      - Verificar: 0% de datas em branco
+
+  5.3 FatoPedidoVenda / anomes 202605
+      - Mesmas verificacoes de 5.2
+
+  5.4 dimcabecalhopedidovenda / anomes 202605
+      - Verificar: DataVenda e DataFaturamento preenchidas
+
+  5.5 Desconto Promocao BEES
+      - Investigar pipeline de origem antes de reprocessar
+      - 473.138 linhas com 0% de data preenchida
+
+--- ETAPA 6: VALIDACAO FINAL DAX ---
+
+Apos reprocessamento, validar no Power BI Desktop:
+  - Total faturamento 202605 entre R$ 30-40 milhoes
+  - Total pedido venda 202605 entre R$ 30-40 milhoes
+  - 0% de datas em branco em 202605 e 202604
+  - Comparar totais com 202603 (mes validado como correto)
+
+
+4. CRONOGRAMA PARA ESTA NOITE
+================================================================================
+
+  20h00 - 20h30   Etapa 1: Corrigir 3 Linked Services
+  20h30 - 22h00   Etapa 2: Corrigir pipelines criticos (1-10 da lista)
+  22h00 - 23h00   Etapa 2: Corrigir pl_metas.json (~35 ocorrencias)
+  23h00 - 23h30   Etapa 3: Commit + Publish no ADF
+  23h30 - 00h00   Etapa 4: Validacao com escopo pequeno
+  00h00 - 06h00   Etapa 5: Reprocessamento rodando em background (madrugada)
+
+  Manha seguinte: Etapa 6 - Validacao DAX e confirmacao dos dados
+
+
+5. ARQUIVOS ALTERADOS
+================================================================================
+
+Linked Services (3 arquivos):
+  azure_df/linkedService/PostgreSupabase.json
+  azure_df/linkedService/PostgreSupabase_Portal.json
+  azure_df/linkedService/PostgreSupabase_rodada_negocio.json
+
+Pipelines criticos (11 arquivos):
+  azure_df/pipeline/pl_fatos_process_incremental_partitions.json
+  azure_df/pipeline/pl_fatos_process_incremental_partitions_reprocesso.json
+  azure_df/pipeline/pl_fatos_carga_historica.json
+  azure_df/pipeline/pl_dimensoes.json
+  azure_df/pipeline/pl_dimensoes_process_incremental_partitions.json
+  azure_df/pipeline/pl_dimensoes_cabecalho_full.json
+  azure_df/pipeline/pl_fato_est.json
+  azure_df/pipeline/pl_fato_rota.json
+  azure_df/pipeline/pl_rodada_negocios.json
+  azure_df/pipeline/pl_tarefas_stg_portal.json
+  azure_df/pipeline/pl_metas.json
+
+Pipelines secundarios (corrigir oportunisticamente):
+  azure_df/pipeline/pl_dimensoes_teste.json
+  azure_df/pipeline/pl_fatopedidorebaixador_v1.json
+  azure_df/pipeline/pl_fatos_process_incremental_partitions_copy1.json
+  azure_df/pipeline/pl_metas_copy1.json
+
+Total: 18 arquivos
+
+
+6. OBSERVACOES IMPORTANTES
+================================================================================
+
+  - Com servicos parados nao ha risco de conflito durante a migracao
+  - A combinacao queryTimeout no Copy source + commandTimeout no Linked
+    Service substitui o SET statement_timeout das queries - nao e necessario
+    manter os dois
+  - Quando queryTimeout e commandTimeout coexistem, queryTimeout tem
+    precedencia na execucao da query da Copy Activity
+  - Nao adicionar campo "version" aos Linked Services PostgreSqlV2; esse
+    campo pertence ao conector AzurePostgreSql, nao ao PostgreSqlV2 usado
+    neste repositorio
+  - O pipeline pl_fatopromocaodesconto.json nao usa SET e nao precisa de
+    alteracao - investigar separadamente a questao do Desconto Promocao BEES
+  - Os pipelines _copy1 e _v1 provavelmente nao rodam em producao mas devem
+    ser corrigidos para evitar confusao futura
+  - Apos a migracao, monitorar Service Health > Health Advisories no portal
+    Azure para receber notificacoes sobre futuras deprecacoes de conectores
+
+================================================================================
+FIM DO PLANO
+================================================================================

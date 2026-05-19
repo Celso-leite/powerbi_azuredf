@@ -82,7 +82,7 @@ Para cada `anomes` recebido:
 
 Caracteristicas:
 - Loop de meses sequencial (`isSequential = true`) para reduzir concorrencia no mesmo path.
-- Query inclui `SET statement_timeout = '2400000'` e filtro por coluna de `anomes`.
+- Query usa `SELECT` simples com filtro por coluna de `anomes`; timeout controlado por `queryTimeout`.
 - Retry configurado na copia (`retry=3`, intervalo 180s).
 
 Tabelas SQL utilizadas (origem):

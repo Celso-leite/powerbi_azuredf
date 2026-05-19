@@ -18,7 +18,7 @@
 					"source": {
 						"type": "PostgreSqlV2Source",
 						"query": {
-							"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatopedidorebaixador_pbi",
+							"value": "SELECT * FROM public.fatopedidorebaixador_pbi",
 							"type": "Expression"
 						},
 						"queryTimeout": "00:30:00"

@@ -65,7 +65,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
+										"value": "@concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
 										"type": "Expression"
 									},
 									"queryTimeout": "01:00:00"

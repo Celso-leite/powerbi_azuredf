@@ -31,7 +31,7 @@
 								"source": {
 									"type": "PostgreSqlV2Source",
 									"query": {
-										"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+										"value": "@if(equals(item(), 'dimcliente_pbi'), 'SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SELECT * FROM public.', item()))",
 										"type": "Expression"
 									},
 									"queryTimeout": "00:30:00"

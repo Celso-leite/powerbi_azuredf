@@ -17,7 +17,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "PostgreSqlV2Source",
-						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas;",
+						"query": "SELECT * FROM public.okj_tarefas;",
 						"queryTimeout": "00:30:00"
 					},
 					"sink": {
@@ -65,7 +65,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "PostgreSqlV2Source",
-						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_prod;",
+						"query": "SELECT * FROM public.okj_tarefas_prod;",
 						"queryTimeout": "00:30:00"
 					},
 					"sink": {
@@ -113,7 +113,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "PostgreSqlV2Source",
-						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_rcas;",
+						"query": "SELECT * FROM public.okj_tarefas_rcas;",
 						"queryTimeout": "00:30:00"
 					},
 					"sink": {
@@ -161,7 +161,7 @@
 				"typeProperties": {
 					"source": {
 						"type": "PostgreSqlV2Source",
-						"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_cli;",
+						"query": "SELECT * FROM public.okj_tarefas_cli;",
 						"queryTimeout": "00:30:00"
 					},
 					"sink": {
