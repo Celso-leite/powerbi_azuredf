@@ -104,7 +104,7 @@
 					},
 					"sslMode": 1,
 					"authenticationType": "Basic",
-					"commandTimeout": 1800
+					"commandTimeout": 2400
 				}
 			},
 			"dependsOn": []
@@ -126,7 +126,8 @@
 						"value": "[parameters('PostgreSupabase_Portal_password')]"
 					},
 					"sslMode": 2,
-					"authenticationType": "Basic"
+					"authenticationType": "Basic",
+					"commandTimeout": 1800
 				}
 			},
 			"dependsOn": []
@@ -149,6 +150,7 @@
 					},
 					"sslMode": 3,
 					"authenticationType": "Basic",
+					"commandTimeout": 1800,
 					"trustServerCertificate": true
 				}
 			},

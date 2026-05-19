@@ -391,7 +391,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SELECT * FROM public.', item()))",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -600,7 +600,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE TO_CHAR(datavenda, ''YYYYMM'') = ''', item().anomes, '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -889,7 +889,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -1006,7 +1006,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SET statement_timeout = ''1800000''; SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item()))",
+												"value": "@if(equals(item(), 'dimcliente_pbi'), 'SELECT T1.*, COALESCE(T2.base_expo, ''NUMERICA'') as base_expo FROM public.dimcliente_pbi T1 LEFT JOIN public.okj_base_expo T2 ON T1.codigoclienteprincipal = T2.codigoclienteprincipal', concat('SELECT * FROM public.', item()))",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -1231,7 +1231,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatoestoqueatual_pbi;",
+												"value": "SELECT * FROM public.fatoestoqueatual_pbi;",
 												"type": "Expression"
 											},
 											"queryTimeout": "00:30:00"
@@ -1360,7 +1360,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatorotalog_pbi;",
+									"value": "SELECT * FROM public.fatorotalog_pbi;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -2150,7 +2150,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatopedidorebaixador_pbi",
+									"value": "SELECT * FROM public.fatopedidorebaixador_pbi",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -2883,7 +2883,7 @@
 								"value": "@variables('table_configurations')",
 								"type": "Expression"
 							},
-							"isSequential": true,
+							"isSequential": false,
 							"activities": [
 								{
 									"name": "Switch_Load_Mode",
@@ -3013,7 +3013,7 @@
 															"source": {
 																"type": "PostgreSqlV2Source",
 																"query": {
-																	"value": "@concat('SELECT e.entity_name, COALESCE(p.status, ''MISSING'') AS status, COALESCE(p.publication_version, 0) AS publication_version, p.run_id, COALESCE(NULLIF(trim(both '','' from translate(p.target_ref::text, chr(34) || ''[] '', '''')), ''''), (SELECT string_agg(TO_CHAR(datum, ''YYYYMM''), '','' ORDER BY datum) FROM generate_series(DATE_TRUNC(''month'', CURRENT_DATE) - (', string(sub(item().monthsToProcess, 1)), ' || '' months'')::interval, DATE_TRUNC(''month'', CURRENT_DATE), ''1 month'') AS datum)) AS target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = ''SUCCESS'' AND COALESCE(p.publication_version, 0) > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM (SELECT ''', item().entityName, '''::text AS entity_name) e LEFT JOIN public.etl_publication_control p ON p.entity_name = e.entity_name LEFT JOIN public.etl_consumer_control c ON c.consumer_name = ''adf_powerbi'' AND c.entity_name = e.entity_name')",
+																	"value": "@concat('SELECT e.entity_name, COALESCE(p.status, ''MISSING'') AS status, COALESCE(p.publication_version, 0) AS publication_version, p.run_id, p.target_ref, COALESCE(c.last_consumed_version, 0) AS last_consumed_version, CASE WHEN p.status = ''SUCCESS'' AND COALESCE(p.publication_version, 0) > COALESCE(c.last_consumed_version, 0) THEN 1 ELSE 0 END AS should_copy FROM (SELECT ''', item().entityName, '''::text AS entity_name) e LEFT JOIN public.etl_publication_control p ON p.entity_name = e.entity_name LEFT JOIN public.etl_consumer_control c ON c.consumer_name = ''adf_powerbi'' AND c.entity_name = e.entity_name')",
 																	"type": "Expression"
 																}
 															},
@@ -3056,7 +3056,7 @@
 																	"type": "Expression"
 																},
 																"anomesList": {
-																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), split(activity('Lookup_Publication_State').output.firstRow.target_ref, ','), createArray())",
+																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), split(activity('Lookup_Publication_State').output.firstRow.target_ref, ','), json('[]'))",
 																	"type": "Expression"
 																}
 															}
@@ -3085,7 +3085,7 @@
 															"source": {
 																"type": "PostgreSqlV2Source",
 																"query": {
-																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''', item().entityName, ''', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version'), concat('SELECT ', string(activity('Lookup_Publication_State').output.firstRow.last_consumed_version), ' AS last_consumed_version'))",
+																	"value": "@if(equals(string(activity('Lookup_Publication_State').output.firstRow.should_copy), '1'), concat('SELECT public.sp_atualizar_etl_consumer_control(''adf_powerbi'', ''', item().entityName, ''', ', string(activity('Lookup_Publication_State').output.firstRow.publication_version), ', ''', activity('Lookup_Publication_State').output.firstRow.run_id, ''', ''SUCCESS'') AS last_consumed_version'), 'SELECT 0 AS last_consumed_version')",
 																	"type": "Expression"
 																}
 															},
@@ -3295,7 +3295,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+												"value": "@concat('SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -3689,7 +3689,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
+												"value": "@concat('SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -3838,7 +3838,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
+												"value": "@concat('SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item().anomes, '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -3987,7 +3987,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''2400000''; SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
+												"value": "@concat('SELECT * FROM public.', pipeline().parameters.tableName, ' WHERE ', pipeline().parameters.anomesColumn, ' = ''', item(), '''')",
 												"type": "Expression"
 											},
 											"queryTimeout": "01:00:00"
@@ -4696,143 +4696,143 @@
 						"defaultValue": [
 							{
 								"nome_tabela": "fatometacategoria_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometacategoria_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometacategoria_pbi"
 							},
 							{
 								"nome_tabela": "fatometacliente_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometacliente_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometacliente_pbi"
 							},
 							{
 								"nome_tabela": "fatometadepartamento_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometadepartamento_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometadepartamento_pbi"
 							},
 							{
 								"nome_tabela": "fatometafornecedor_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometafornecedor_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometafornecedor_pbi"
 							},
 							{
 								"nome_tabela": "fatometaproduto_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometaproduto_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometaproduto_pbi"
 							},
 							{
 								"nome_tabela": "fatometarca_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4 FROM public.fatometarca_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4 FROM public.fatometarca_pbi"
 							},
 							{
 								"nome_tabela": "fatometamarca_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometamarca_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometamarca_pbi"
 							},
 							{
 								"nome_tabela": "fatometagrupoprod_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometagrupoprod_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometagrupoprod_pbi"
 							},
 							{
 								"nome_tabela": "fatometasecao_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometasecao_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometasecao_pbi"
 							},
 							{
 								"nome_tabela": "fatometafornecedorpex_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra, pesocompra FROM public.fatometafornecedorpex_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra, pesocompra FROM public.fatometafornecedorpex_pbi"
 							},
 							{
 								"nome_tabela": "fatometagrupoprodpex_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometagrupoprodpex_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometagrupoprodpex_pbi"
 							},
 							{
 								"nome_tabela": "fatometaprodutopex_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutopex_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutopex_pbi"
 							},
 							{
 								"nome_tabela": "fatometaclientepex_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclientepex_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclientepex_pbi"
 							},
 							{
 								"nome_tabela": "fatometacliprodpex_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometacliprodpex_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometacliprodpex_pbi"
 							},
 							{
 								"nome_tabela": "fatometacligrupoprod_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra, pesocompra FROM public.fatometacligrupoprod_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra, pesocompra FROM public.fatometacligrupoprod_pbi"
 							},
 							{
 								"nome_tabela": "fatometafornecedorextra_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometafornecedorextra_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometafornecedorextra_pbi"
 							},
 							{
 								"nome_tabela": "fatometaprodutoextra_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, valorp1, positivacaop1, valorp2, positivacaop2, valorp3, positivacaop3, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutoextra_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, valorp1, positivacaop1, valorp2, positivacaop2, valorp3, positivacaop3, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutoextra_pbi"
 							},
 							{
 								"nome_tabela": "fatometaclienteextra_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclienteextra_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclienteextra_pbi"
 							},
 							{
 								"nome_tabela": "fatometagrupoprodextra_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometagrupoprodextra_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometagrupoprodextra_pbi"
 							},
 							{
 								"nome_tabela": "fatometaclientecnx_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclientecnx_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaclientecnx_pbi"
 							},
 							{
 								"nome_tabela": "fatometasuperfechamento_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometasuperfechamento_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometasuperfechamento_pbi"
 							},
 							{
 								"nome_tabela": "fatometacliprod_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometacliprod_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometacliprod_pbi"
 							},
 							{
 								"nome_tabela": "fatometageral_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, to_char(datavigencia, 'DD/MM/YYYY') AS datavigencia, descricao, filial, tipometa, metavalor, metapos FROM public.fatometageral_pbi"
+								"query": "SELECT id, codigometa, to_char(datavigencia, 'DD/MM/YYYY') AS datavigencia, descricao, filial, tipometa, metavalor, metapos FROM public.fatometageral_pbi"
 							},
 							{
 								"nome_tabela": "fatometageralfornec_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, codfornec, codfornecprinc, to_char(datavigencia, 'DD/MM/YYYY') AS datavigencia, descricao, filial, tipometa, metavalor, metapos, metamargem, codigorca FROM public.fatometageralfornec_pbi"
+								"query": "SELECT id, codigometa, codfornec, codfornecprinc, to_char(datavigencia, 'DD/MM/YYYY') AS datavigencia, descricao, filial, tipometa, metavalor, metapos, metamargem, codigorca FROM public.fatometageralfornec_pbi"
 							},
 							{
 								"nome_tabela": "fatometasemanapasta_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, codfornecedor, codigorca, filial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometasemanapasta_pbi"
+								"query": "SELECT id, codigometa, codfornecedor, codigorca, filial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometasemanapasta_pbi"
 							},
 							{
 								"nome_tabela": "fatometasemanaregiao_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, codfornecedor, codigorca, filial, codigocliente, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometasemanaregiao_pbi"
+								"query": "SELECT id, codigometa, codfornecedor, codigorca, filial, codigocliente, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometasemanaregiao_pbi"
 							},
 							{
 								"nome_tabela": "fatometageralfornecddd_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, codfornecedor, codfornecprinc, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, filial, descricao, tipometa, metavalor, codigorca, codigocliente FROM public.fatometageralfornecddd_pbi"
+								"query": "SELECT id, codigometa, codfornecedor, codfornecprinc, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, filial, descricao, tipometa, metavalor, codigorca, codigocliente FROM public.fatometageralfornecddd_pbi"
 							},
 							{
 								"nome_tabela": "fatometafeira_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigo, codigocliente, codigorca, codfornec, codfilial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, valormeta FROM public.fatometafeira_pbi"
+								"query": "SELECT id, codigo, codigocliente, codigorca, codfornec, codfilial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, valormeta FROM public.fatometafeira_pbi"
 							},
 							{
 								"nome_tabela": "fatometaprevsemanal_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigometa, codigorca, codfornecedor, filial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometaprevsemanal_pbi"
+								"query": "SELECT id, codigometa, codigorca, codfornecedor, filial, to_char(dtinicio, 'DD/MM/YYYY') AS dtinicio, to_char(dtfim, 'DD/MM/YYYY') AS dtfim, descricao, tipometa, metavalor FROM public.fatometaprevsemanal_pbi"
 							},
 							{
 								"nome_tabela": "fatometabaseexpo_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4 FROM public.fatometabaseexpo_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4 FROM public.fatometabaseexpo_pbi"
 							},
 							{
 								"nome_tabela": "fatometaprodutox_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutox_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometaprodutox_pbi"
 							},
 							{
 								"nome_tabela": "fatometarcaextra_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometarcaextra_pbi"
+								"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorcompra FROM public.fatometarcaextra_pbi"
 							},
 							{
 								"nome_tabela": "fatometaexpo_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, cod_cliente, codigo_filial, codigo_rca, to_char(data_inicio, 'DD/MM/YYYY') AS data_inicio, meta_valor, codigo_fornecedor, to_char(data_fim, 'DD/MM/YYYY') AS data_fim, camp_pax, observacoes FROM public.fatometaexpo_pbi"
+								"query": "SELECT id, cod_cliente, codigo_filial, codigo_rca, to_char(data_inicio, 'DD/MM/YYYY') AS data_inicio, meta_valor, codigo_fornecedor, to_char(data_fim, 'DD/MM/YYYY') AS data_fim, camp_pax, observacoes FROM public.fatometaexpo_pbi"
 							},
 							{
 								"nome_tabela": "metapassagemexpo_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigo_cliente, codigo_cliente_principal, nome_fantasia, ddd, codigo_fornecedor, codigo_fornecedor_principal, nome_fornecedor, descricao_meta, chave_passagem, meta_valor, pax, \"Codigofilial\", to_char(\"Data\", 'DD/MM/YYYY') AS \"Data\" FROM public.metapassagemexpo_pbi"
+								"query": "SELECT id, codigo_cliente, codigo_cliente_principal, nome_fantasia, ddd, codigo_fornecedor, codigo_fornecedor_principal, nome_fornecedor, descricao_meta, chave_passagem, meta_valor, pax, \"Codigofilial\", to_char(\"Data\", 'DD/MM/YYYY') AS \"Data\" FROM public.metapassagemexpo_pbi"
 							},
 							{
 								"nome_tabela": "metaclienteconexao_pbi",
-								"query": "SET statement_timeout = '1800000'; SELECT id, codigo_cliente, codigo_cliente_principal, meta_valor FROM public.metaclienteconexao_pbi"
+								"query": "SELECT id, codigo_cliente, codigo_cliente_principal, meta_valor FROM public.metaclienteconexao_pbi"
 							}
 						]
 					}
@@ -4882,7 +4882,7 @@
 										"source": {
 											"type": "PostgreSqlV2Source",
 											"query": {
-												"value": "@concat('SET statement_timeout = ''1800000''; SELECT * FROM public.', item())",
+												"value": "@concat('SELECT * FROM public.', item())",
 												"type": "Expression"
 											},
 											"queryTimeout": "02:00:00"
@@ -5407,7 +5407,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.fatovendas_rn_pbi;",
+									"value": "SELECT * FROM public.fatovendas_rn_pbi;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -5473,7 +5473,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanics;",
+									"value": "SELECT * FROM public.mechanics;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -5539,7 +5539,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SET statement_timeout = '1800000'; SELECT * FROM public.mechanic_purchase_history_products;",
+									"value": "SELECT * FROM public.mechanic_purchase_history_products;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
@@ -5970,7 +5970,7 @@
 						"typeProperties": {
 							"source": {
 								"type": "PostgreSqlV2Source",
-								"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas;",
+								"query": "SELECT * FROM public.okj_tarefas;",
 								"queryTimeout": "00:30:00"
 							},
 							"sink": {
@@ -6018,7 +6018,7 @@
 						"typeProperties": {
 							"source": {
 								"type": "PostgreSqlV2Source",
-								"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_prod;",
+								"query": "SELECT * FROM public.okj_tarefas_prod;",
 								"queryTimeout": "00:30:00"
 							},
 							"sink": {
@@ -6066,7 +6066,7 @@
 						"typeProperties": {
 							"source": {
 								"type": "PostgreSqlV2Source",
-								"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_rcas;",
+								"query": "SELECT * FROM public.okj_tarefas_rcas;",
 								"queryTimeout": "00:30:00"
 							},
 							"sink": {
@@ -6114,7 +6114,7 @@
 						"typeProperties": {
 							"source": {
 								"type": "PostgreSqlV2Source",
-								"query": "SET statement_timeout = '1800000'; SELECT * FROM public.okj_tarefas_cli;",
+								"query": "SELECT * FROM public.okj_tarefas_cli;",
 								"queryTimeout": "00:30:00"
 							},
 							"sink": {
@@ -7565,7 +7565,7 @@
 					},
 					"sslMode": 1,
 					"authenticationType": "Basic",
-					"commandTimeout": 1800
+					"commandTimeout": 2400
 				}
 			},
 			"dependsOn": []
@@ -7587,7 +7587,8 @@
 						"value": "[parameters('PostgreSupabase_Portal_password')]"
 					},
 					"sslMode": 2,
-					"authenticationType": "Basic"
+					"authenticationType": "Basic",
+					"commandTimeout": 1800
 				}
 			},
 			"dependsOn": []
@@ -7610,10 +7611,305 @@
 					},
 					"sslMode": 3,
 					"authenticationType": "Basic",
+					"commandTimeout": 1800,
 					"trustServerCertificate": true
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_positivakc_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorios_winthor_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								44
+							],
+							"hours": [
+								6,
+								9,
+								11,
+								15,
+								18
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rotas_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_grupos_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:45:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								48
+							],
+							"hours": [
+								6,
+								7,
+								8,
+								9,
+								10,
+								11,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatos",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatopedidorebaixador",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatopromocaodesconto",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes_incremental",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_tabelas_preco_pbi",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fato_est",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fato_rota",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorio_verbas_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rodada_negocios",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								44
+							],
+							"hours": [
+								0,
+								6,
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								19,
+								20,
+								21,
+								22,
+								23
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_metas",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2025-01-01T06:35:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								50
+							],
+							"hours": [
+								7,
+								8,
+								9,
+								10,
+								11,
+								12,
+								13,
+								14,
+								15,
+								16,
+								17,
+								18,
+								22
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/integrationRuntimeOkajimaWINT')]",
@@ -8335,300 +8631,6 @@
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas_read')]",
 				"[concat(variables('factoryId'), '/datasets/ds_fato_faturamento_pasta')]",
 				"[concat(variables('factoryId'), '/datasets/dw_tarefas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_dimensoes')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_dimensoes",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_rotas_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_grupos_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:45:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								48
-							],
-							"hours": [
-								6,
-								7,
-								8,
-								9,
-								10,
-								11,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_fatos')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatos",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatopedidorebaixador",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fatopromocaodesconto",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_dimensoes_incremental",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_tabelas_preco_pbi",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fato_est",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_fato_rota",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorio_verbas_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_rodada_negocios",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								44
-							],
-							"hours": [
-								0,
-								6,
-								7,
-								8,
-								9,
-								10,
-								11,
-								12,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								19,
-								20,
-								21,
-								22,
-								23
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_fatos')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_metas",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:35:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								50
-							],
-							"hours": [
-								7,
-								8,
-								9,
-								10,
-								11,
-								12,
-								13,
-								14,
-								15,
-								16,
-								17,
-								18,
-								22
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_metas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/Trigger_CE')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_relatorios_winthor_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2025-01-01T06:40:00",
-						"timeZone": "E. South America Standard Time",
-						"schedule": {
-							"minutes": [
-								44
-							],
-							"hours": [
-								6,
-								9,
-								11,
-								15,
-								18
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
 			]
 		}
 	]
