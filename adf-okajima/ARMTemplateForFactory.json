@@ -5407,7 +5407,7 @@
 							"source": {
 								"type": "PostgreSqlV2Source",
 								"query": {
-									"value": "SELECT numerovenda_promessa, codigocliente, codigoclienteprincipal, codfornecprinc, codigo_pasta, codigomecanica, codigomecanicaprincipal, produto, mecanica, modalidade_mecanica, valorcombo_mecanica, quantidadecupons_mecanica, quantidadebrindes_mecanica, codigosorteio, codigocombo_bees, quantidademecanica, quantidadecupons_total, status_venda, ordem_status_venda, TO_CHAR(datavenda, 'YYYY-MM-DD') AS datavenda, valortotal, valorconfirmado, valorpendente, quantidadevendas, observacao FROM public.fatovendas_rn_pbi;",
+									"value": "SELECT codigo_pasta, codigocombo_bees, mecanica, modalidade_mecanica, observacao, status_venda, codfornecprinc, codigocliente, codigoclienteprincipal, codigomecanica, codigomecanicaprincipal, codigosorteio, numerovenda_promessa, ordem_status_venda, quantidadebrindes_mecanica, quantidadecupons_mecanica, quantidadecupons_total, quantidademecanica, quantidadevendas, valorcombo_mecanica, valorconfirmado, valorpendente, valortotal, TO_CHAR(datavenda, 'YYYY-MM-DD') AS datavenda FROM public.fatovendas_rn_pbi;",
 									"type": "Expression"
 								},
 								"queryTimeout": "00:30:00"
