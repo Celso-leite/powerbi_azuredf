@@ -122,13 +122,20 @@
 		],
 		"parameters": {
 			"tableName": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "fatofaturamento_pbi"
 			},
 			"anomesColumn": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "anomes_faturamento"
 			},
 			"anomesList": {
-				"type": "array"
+				"type": "array",
+				"defaultValue": [
+					202603,
+					202604,
+					202605
+				]
 			}
 		},
 		"folder": {
