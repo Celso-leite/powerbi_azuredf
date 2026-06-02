@@ -1104,19 +1104,14 @@
 				"parameters": {
 					"tableName": {
 						"type": "string",
-						"defaultValue": "fatofaturamento_pbi"
+						"defaultValue": "fatodevolucao_pbi"
 					},
 					"anomesColumn": {
 						"type": "string",
-						"defaultValue": "anomes_faturamento"
+						"defaultValue": "anomes_devolucao"
 					},
 					"anomesList": {
-						"type": "array",
-						"defaultValue": [
-							202603,
-							202604,
-							202605
-						]
+						"type": "array"
 					}
 				},
 				"folder": {
