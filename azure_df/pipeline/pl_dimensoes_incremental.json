@@ -113,7 +113,7 @@
 					{
 						"tableName": "public.dimcabecalhopedidovenda_pbi",
 						"anomesColumn": "TO_CHAR(datavenda, 'YYYYMM')",
-						"monthsToProcess": 2,
+						"monthsToProcess": 6,
 						"loadType": "incremental"
 					}
 				]
