@@ -13,6 +13,209 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_tabelas_preco_pbi')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Tabelas_Preco",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableConfigurations",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().TableName)",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(item().SinkDirectoryRoot, '/', toLower(replace(item().TableName, 'OKJ_', '')))",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item().TableName), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"TableConfigurations": {
+						"type": "array",
+						"defaultValue": [
+							{
+								"TableName": "OKJ_DIMREGIAOPRECO_PBI",
+								"SinkDirectoryRoot": "dimensoes"
+							},
+							{
+								"TableName": "OKJ_DIMPRECOCLIENTE_PBI",
+								"SinkDirectoryRoot": "dimensoes"
+							},
+							{
+								"TableName": "OKJ_FATOTABELAPRECO_PBI",
+								"SinkDirectoryRoot": "fatos"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "fatotabelapreco"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_tarefas_df')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute_DataFlow_Tarefas",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.02:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DfTarefasFatoDim",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"SrcTarefas": {
+										"FolderPath": "tarefas/stg_okj_tarefas",
+										"WildcardFileName": "stg_okj_tarefas.parquet"
+									},
+									"SrcTarefasCli": {
+										"FolderPath": "tarefas/stg_okj_tarefas_cli",
+										"WildcardFileName": "stg_okj_tarefas_cli.parquet"
+									},
+									"SrcTarefasRcas": {
+										"FolderPath": "tarefas/stg_okj_tarefas_rcas",
+										"WildcardFileName": "stg_okj_tarefas_rcas.parquet"
+									},
+									"SrcTarefasProd": {
+										"FolderPath": "tarefas/stg_okj_tarefas_prod",
+										"WildcardFileName": "stg_okj_tarefas_prod.parquet"
+									},
+									"SrcDimCliente": {
+										"FolderPath": "dimensoes/dimcliente_pbi",
+										"WildcardFileName": "dimcliente_pbi.parquet"
+									},
+									"SrcDimRca": {
+										"FolderPath": "dimensoes/dimrca_pbi",
+										"WildcardFileName": "dimrca_pbi.parquet"
+									},
+									"SrcFatoFaturamento": {},
+									"SrcDimRotaRca": {
+										"FolderPath": "dimensoes/dimrotarca_pbi",
+										"WildcardFileName": "dimrotarca_pbi.parquet"
+									},
+									"SinkDimTarefa": {
+										"Nome_Tabela": "dimtarefa_pbi"
+									},
+									"SinkFatoTarefa": {
+										"Nome_Tabela": "fatotarefa_pbi"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "tarefas"
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-11-20T15:11:28Z"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/Trigger_metas')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
@@ -707,7 +910,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]"
 			]
 		}
 	]

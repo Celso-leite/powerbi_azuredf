@@ -5120,6 +5120,83 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_rca_extrato_pagamentos_full')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_rca_extrato_pagamentos_full",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.02:00:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"query": "SELECT * FROM public.rca_extrato_pagamentos;",
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "rca_extrato_pagamentos_supabase_portal",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dw_fatos_ofc_full",
+								"type": "DatasetReference",
+								"parameters": {
+									"tabela": {
+										"value": "rca_extrato_pagamentos",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "comissoes"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/rca_extrato_pagamentos_supabase_portal')]",
+				"[concat(variables('factoryId'), '/datasets/dw_fatos_ofc_full')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_relatorio_verbas_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -7445,6 +7522,30 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/rca_extrato_pagamentos_supabase_portal')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_Portal",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ds_comissoes"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "public",
+					"table": "rca_extrato_pagamentos"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_Portal')]"
 			]
 		},
 		{
