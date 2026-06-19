@@ -9,6 +9,12 @@
 					"referenceName": "pl_metas",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_rca_extrato_pagamentos_full",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
