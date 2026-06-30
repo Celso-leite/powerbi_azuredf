@@ -486,7 +486,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -1141,6 +1141,13 @@
 					{
 						"pipelineReference": {
 							"referenceName": "pl_rodada_negocios",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatocomissaocamp_oracle_adls",
 							"type": "PipelineReference"
 						},
 						"parameters": {}

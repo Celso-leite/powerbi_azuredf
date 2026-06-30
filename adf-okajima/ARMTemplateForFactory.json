@@ -8117,6 +8117,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_fatocomissaocamp_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -8166,7 +8173,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fato_est')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fato_rota')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_fatocomissaocamp_oracle_adls')]"
 			]
 		},
 		{
@@ -8175,7 +8183,7 @@
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
