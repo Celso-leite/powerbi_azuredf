@@ -63,6 +63,12 @@
 					"referenceName": "pl_fatocomissaocamp_oracle_adls",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_fatocancelamento_oracle_adls",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
