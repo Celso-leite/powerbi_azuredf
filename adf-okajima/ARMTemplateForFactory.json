@@ -7930,13 +7930,6 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "pl_hitloreal",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
 							"referenceName": "pl_positivakc_oracle_adls",
 							"type": "PipelineReference"
 						},
@@ -7974,7 +7967,6 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
 			]
@@ -8131,6 +8123,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitloreal",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -8182,7 +8181,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatocomissaocamp_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_fatocancelamento_oracle_adls')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_fatocancelamento_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]"
 			]
 		},
 		{
