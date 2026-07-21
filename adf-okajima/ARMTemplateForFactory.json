@@ -163,6 +163,130 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_campanhaext_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_CampanhaExt",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.Tabelas_CampanhaExt",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 3,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_dynamic",
+											"type": "DatasetReference",
+											"parameters": {
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace(item(), 'OKJ_', '')))",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item()), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Tabelas_CampanhaExt": {
+						"type": "array",
+						"defaultValue": [
+							"OKJ_CAMPANHAEXT_PBI",
+							"OKJ_CAMPANHAEXTI_PBI",
+							"OKJ_CAMPANHAEXTMD_PBI"
+						]
+					},
+					"SinkDirectoryRoot": {
+						"type": "string",
+						"defaultValue": "campanhas_extra"
+					},
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					}
+				},
+				"folder": {
+					"name": "campanha_extra"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_dimcabecalhopedidovenda_historico_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -7999,6 +8123,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_campanhaext_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -8036,7 +8167,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_campanhaext_oracle_adls')]"
 			]
 		},
 		{

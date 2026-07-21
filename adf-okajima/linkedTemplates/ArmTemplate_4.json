@@ -13,6 +13,136 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_relatorio_verbas_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach_Relatorio_Verbas",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.TableConfigurations",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 4,
+							"activities": [
+								{
+									"name": "Copy_Oracle_to_ADLS",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "OracleSource",
+											"oracleReaderQuery": {
+												"value": "@concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', item().TableName)",
+												"type": "Expression"
+											},
+											"partitionOption": "None",
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings",
+												"compressionCodec": "snappy"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_oracle_query_consulting",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic_okj",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat(item().SinkDirectoryRoot, '/', item().SinkTableName)",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat(toLower(item().TableName), '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"TableConfigurations": {
+						"type": "array",
+						"defaultValue": [
+							{
+								"TableName": "OKJ_FATOVERBA_LISTAGEM_PBI",
+								"SinkDirectoryRoot": "fatos/relatorio_verbas",
+								"SinkTableName": "fatoverba_listagem_pbi"
+							},
+							{
+								"TableName": "OKJ_FATOVERBA_RESUMO_PBI",
+								"SinkDirectoryRoot": "fatos/relatorio_verbas",
+								"SinkTableName": "fatoverba_resumo_pbi"
+							},
+							{
+								"TableName": "OKJ_FATOVERBA_APLICACAO_PBI",
+								"SinkDirectoryRoot": "fatos/relatorio_verbas",
+								"SinkTableName": "fatoverba_aplicacao_pbi"
+							},
+							{
+								"TableName": "OKJ_FATOVERBA_RECEBIMENTO_PBI",
+								"SinkDirectoryRoot": "fatos/relatorio_verbas",
+								"SinkTableName": "fatoverba_recebimento_pbi"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "relatorio_verbas"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_relatorios_winthor_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1029,6 +1159,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_campanhaext_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -1201,7 +1338,8 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopedidorebaixador')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]"
 			]
 		}
 	]
