@@ -4806,6 +4806,122 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_hitkc')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy HitKC View",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": {
+									"value": "@if(\n    empty(pipeline().parameters.CustomQuery),\n    concat('SELECT * FROM ', pipeline().parameters.SchemaName, '.', pipeline().parameters.TableName),\n    pipeline().parameters.CustomQuery\n)",
+									"type": "Expression"
+								},
+								"partitionOption": "None",
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_oracle_dynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.SchemaName",
+										"type": "Expression"
+									},
+									"TableName": {
+										"value": "@pipeline().parameters.TableName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_dynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"Directory": {
+										"value": "@pipeline().parameters.SinkDirectory",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.SinkFileName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string",
+						"defaultValue": "OKAJIMA"
+					},
+					"TableName": {
+						"type": "string",
+						"defaultValue": "HITKC_RESULTADOS_VW"
+					},
+					"CustomQuery": {
+						"type": "string",
+						"defaultValue": "SELECT CAST(COD_RCA AS NUMBER(19,0)) AS COD_RCA, CAST(COD_CLIENTE AS NUMBER(19,0)) AS COD_CLIENTE, CAST(COD_PRODUTO AS NUMBER(19,0)) AS COD_PRODUTO, CAST(POSITIVOU_FATURADO AS NUMBER(10,0)) AS POSITIVOU_FATURADO, CAST(POSITIVOU_VENDIDO AS NUMBER(10,0)) AS POSITIVOU_VENDIDO, CAST(DATA_INICIO_PERIODO AS DATE) AS DATA_INICIO_PERIODO, CAST(DATA_FIM_PERIODO AS DATE) AS DATA_FIM_PERIODO, CAST(DT_POSITIVOU_FATURADO AS DATE) AS DT_POSITIVOU_FATURADO, CAST(DT_POSITIVOU_VENDIDO AS DATE) AS DT_POSITIVOU_VENDIDO FROM OKAJIMA.HITKC_RESULTADOS_VW"
+					},
+					"SinkDirectory": {
+						"type": "string",
+						"defaultValue": "fatos/fatohitkc_pbi"
+					},
+					"SinkFileName": {
+						"type": "string",
+						"defaultValue": "fatohitkc_pbi.parquet"
+					}
+				},
+				"folder": {
+					"name": "hitkc"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_hitloreal')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -5319,130 +5435,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/tabelas_metas_supabase')]",
 				"[concat(variables('factoryId'), '/datasets/dw_metas')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_positivakc_oracle_adls')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEach_PositivaKC",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.Tabelas_PositivaKC",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"batchCount": 5,
-							"activities": [
-								{
-									"name": "Copy_Oracle_to_ADLS",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.01:30:00",
-										"retry": 2,
-										"retryIntervalInSeconds": 60,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "OracleSource",
-											"partitionOption": "None",
-											"queryTimeout": "00:30:00"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_oracle_dynamic",
-											"type": "DatasetReference",
-											"parameters": {
-												"SchemaName": {
-													"value": "@pipeline().parameters.SchemaName",
-													"type": "Expression"
-												},
-												"TableName": {
-													"value": "@item()",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_dynamic",
-											"type": "DatasetReference",
-											"parameters": {
-												"Directory": {
-													"value": "@concat(pipeline().parameters.SinkDirectoryRoot, '/', toLower(replace(item(), 'OKJ_', '')))",
-													"type": "Expression"
-												},
-												"FileName": {
-													"value": "@concat(toLower(item()), '.parquet')",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"Tabelas_PositivaKC": {
-						"type": "array",
-						"defaultValue": [
-							"OKJ_POSITIVAKC_RESULTADOS",
-							"OKJ_POSITIVAKC_INDICADORES"
-						]
-					},
-					"SinkDirectoryRoot": {
-						"type": "string",
-						"defaultValue": "positivakc"
-					},
-					"SchemaName": {
-						"type": "string",
-						"defaultValue": "OKAJIMA"
-					}
-				},
-				"folder": {
-					"name": "positiva_kc"
-				},
-				"annotations": [],
-				"lastPublishTime": "2026-01-14T20:53:25Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic')]"
 			]
 		},
 		{
@@ -8054,13 +8046,6 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
 							"referenceName": "pl_relatorios_winthor_oracle_adls",
 							"type": "PipelineReference"
 						},
@@ -8091,7 +8076,6 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_positivakc_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]"
 			]
 		},
@@ -8127,6 +8111,13 @@
 					{
 						"pipelineReference": {
 							"referenceName": "pl_campanhaext_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitkc",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -8168,7 +8159,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_campanhaext_oracle_adls')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_campanhaext_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_hitkc')]"
 			]
 		},
 		{

@@ -1091,13 +1091,6 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "pl_positivakc_oracle_adls",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
 							"referenceName": "pl_relatorios_winthor_oracle_adls",
 							"type": "PipelineReference"
 						},
@@ -1163,6 +1156,13 @@
 					{
 						"pipelineReference": {
 							"referenceName": "pl_campanhaext_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitkc",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
