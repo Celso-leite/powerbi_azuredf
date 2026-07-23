@@ -27,6 +27,12 @@
 					"referenceName": "pl_campanhaext_oracle_adls",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_hitkc",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",

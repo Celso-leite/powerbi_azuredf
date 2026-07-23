@@ -6,12 +6,6 @@
 		"pipelines": [
 			{
 				"pipelineReference": {
-					"referenceName": "pl_positivakc_oracle_adls",
-					"type": "PipelineReference"
-				}
-			},
-			{
-				"pipelineReference": {
 					"referenceName": "pl_relatorios_winthor_oracle_adls",
 					"type": "PipelineReference"
 				}
