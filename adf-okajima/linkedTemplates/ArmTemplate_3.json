@@ -819,7 +819,10 @@
 						"defaultValue": [
 							"OKJ_CAMPANHAEXT_PBI",
 							"OKJ_CAMPANHAEXTI_PBI",
-							"OKJ_CAMPANHAEXTMD_PBI"
+							"OKJ_CAMPANHAEXTMD_PBI",
+							"OKJ_CAMPANHAEXT_APURACAO_PBI",
+							"OKJ_CAMPANHAEXT_APURACAO_PEDIDO_PBI",
+							"OKJ_CAMPANHAEXT_MULTA_PBI"
 						]
 					},
 					"SinkDirectoryRoot": {
