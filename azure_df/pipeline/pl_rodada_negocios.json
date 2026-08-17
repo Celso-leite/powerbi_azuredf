@@ -61,15 +61,81 @@
 						"type": "DatasetReference",
 						"parameters": {
 							"tabela": {
-								"value": "fatovendas_rn_pbi",
-								"type": "Expression"
+									"value": "fatovendas_rn_pbi",
+									"type": "Expression"
+								}
 							}
 						}
-					}
-				]
-			},
-			{
-				"name": "Copy_Mechanics_RN",
+					]
+				},
+				{
+					"name": "Copy_FatoVendas_Super_Norte",
+					"type": "Copy",
+					"dependsOn": [],
+					"policy": {
+						"timeout": "0.01:30:00",
+						"retry": 2,
+						"retryIntervalInSeconds": 60,
+						"secureOutput": false,
+						"secureInput": false
+					},
+					"userProperties": [],
+					"typeProperties": {
+						"source": {
+							"type": "PostgreSqlV2Source",
+							"query": {
+								"value": "SELECT id_principal_venda, id_item_venda, codigo_evento, codigo_cliente, codigo_cliente_principal, cnpj_cliente, nome_fantasia_cliente, razao_social_cliente, cidade_cliente, canal_cliente, status_pedido, nome_responsavel_pedido, id_fornecedor, codigo_fornecedor, nome_fornecedor, tipo_linha_venda, codigo_combo_industria, codigo_categoria, nome_categoria, nome_combo_industria, TO_CHAR(data_venda, 'YYYY-MM-DD') AS data_venda, TO_CHAR(data_cancelamento, 'YYYY-MM-DD') AS data_cancelamento, flag_cancelada, quantidade_item, valor_unitario_item, valor_total_item, ordem_item, modalidade_premio, nome_premio FROM public.fatovendas_super_norte_pbi;",
+								"type": "Expression"
+							},
+							"queryTimeout": "00:30:00"
+						},
+						"sink": {
+							"type": "ParquetSink",
+							"storeSettings": {
+								"type": "AzureBlobFSWriteSettings"
+							},
+							"formatSettings": {
+								"type": "ParquetWriteSettings"
+							}
+						},
+						"enableStaging": false,
+						"parallelCopies": 4,
+						"translator": {
+							"type": "TabularTranslator",
+							"typeConversion": true,
+							"typeConversionSettings": {
+								"allowDataTruncation": true,
+								"treatBooleanAsNumber": false
+							}
+						}
+					},
+					"inputs": [
+						{
+							"referenceName": "Tabelas_fatos_supabase_rodada_negocio",
+							"type": "DatasetReference",
+							"parameters": {
+								"tabela": {
+									"value": "fatovendas_super_norte_pbi",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"outputs": [
+						{
+							"referenceName": "dw_fatos_ofc_full",
+							"type": "DatasetReference",
+							"parameters": {
+								"tabela": {
+									"value": "fatovendas_super_norte_pbi",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Copy_Mechanics_RN",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
