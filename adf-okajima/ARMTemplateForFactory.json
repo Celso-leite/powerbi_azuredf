@@ -6189,6 +6189,12 @@
 								"SinkFolder": "dimrotacobertura_pbi",
 								"SinkFileName": "dimrotacobertura_pbi.parquet",
 								"QueryOverride": ""
+							},
+							{
+								"SourceView": "OKJ_DIMTELEVENDAS_PBI",
+								"SinkFolder": "dimtelevendas_pbi",
+								"SinkFileName": "dimtelevendas_pbi.parquet",
+								"QueryOverride": ""
 							}
 						]
 					},
