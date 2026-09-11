@@ -113,7 +113,7 @@
 						"SourceView": "OKJ_DIMTELEVENDAS_PBI",
 						"SinkFolder": "dimtelevendas_pbi",
 						"SinkFileName": "dimtelevendas_pbi.parquet",
-						"QueryOverride": ""
+						"QueryOverride": "SELECT CAST(CODIGORCA AS NUMBER(18,0)) AS \"codigorca\", CAST(CODIGOSUPERVISOR AS NUMBER(18,0)) AS \"codigosupervisor\", CAST(CODIGOCOORDENADOR AS NUMBER(18,0)) AS \"codigocoordenador\", CAST(CODIGOGERENTE AS NUMBER(18,0)) AS \"codigogerente\", RCA AS \"rca\", DESCRICAORCA AS \"descricaorca\", DATAINICIO AS \"datainicio\", DATADESLIGAMENTO AS \"datadesligamento\", EMAILRCA AS \"emailrca\", TELEFONERCA AS \"telefonerca\", SUPERVISOR AS \"supervisor\", DESCRICAOSUPERVISOR AS \"descricaosupervisor\", EMAILSUPERVISOR AS \"emailsupervisor\", TELEFONESUPERVISOR AS \"telefonesupervisor\", COORDENADOR AS \"coordenador\", DESCRICAOCOORDENADOR AS \"descricaocoordenador\", CAST(ORDEM_STATUS_SUPERVISOR AS NUMBER(18,0)) AS \"ordem_status_supervisor\", GERENTE AS \"gerente\", DESCRICAOGERENTE AS \"descricaogerente\", EMAILGERENTE AS \"emailgerente\", SITUACAO AS \"situacao\", TIPO AS \"tipo\", MODELOCAMPANHA AS \"modelocampanha\", BEES AS \"bees\", HIERARQUIA AS \"hierarquia\", ROTEIRIZACAO AS \"roteirizacao\", CPF AS \"cpf\", AREAATUACAO AS \"areaatuacao\", DIV_REGIAO AS \"div_regiao\", CODIGOCENTROCUSTO AS \"codigocentrocusto\" FROM OKAJIMA.OKJ_DIMTELEVENDAS_PBI"
 					}
 				]
 			},
