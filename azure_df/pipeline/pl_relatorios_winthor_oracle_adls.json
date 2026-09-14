@@ -113,6 +113,16 @@
 						"SinkTableName": "OKJ_8101_WINTHOR"
 					},
 					{
+						"TableName": "OKJ_105_WINTHOR",
+						"SinkDirectoryRoot": "fatos/relatorios_winthor",
+						"SinkTableName": "OKJ_105_WINTHOR"
+					},
+					{
+						"TableName": "OKJ_3315_WINTHOR",
+						"SinkDirectoryRoot": "fatos/relatorios_winthor",
+						"SinkTableName": "OKJ_3315_WINTHOR"
+					},
+					{
 						"TableName": "OKJ_286_WINTHOR",
 						"SinkDirectoryRoot": "fatos/relatorios_winthor",
 						"SinkTableName": "OKJ_286_WINTHOR"
