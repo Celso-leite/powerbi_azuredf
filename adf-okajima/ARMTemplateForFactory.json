@@ -8206,6 +8206,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_rotas_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -8244,7 +8251,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_grupos_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_campanhaext_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_hitkc')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_hitkc')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]"
 			]
 		},
 		{
