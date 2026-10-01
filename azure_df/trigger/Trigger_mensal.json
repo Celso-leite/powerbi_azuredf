@@ -2,7 +2,7 @@
 	"name": "Trigger_mensal",
 	"properties": {
 		"annotations": [],
-		"runtimeState": "Stopped",
+		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
@@ -14,7 +14,7 @@
 		"type": "ScheduleTrigger",
 		"typeProperties": {
 			"recurrence": {
-				"frequency": "Day",
+				"frequency": "Month",
 				"interval": 1,
 				"startTime": "2025-01-01T06:40:00",
 				"timeZone": "E. South America Standard Time",
@@ -24,11 +24,11 @@
 					],
 					"hours": [
 						6,
-						9,
-						11,
-						15,
-						16,
-						18
+						11
+					],
+					"monthDays": [
+						1,
+						2
 					]
 				}
 			}
