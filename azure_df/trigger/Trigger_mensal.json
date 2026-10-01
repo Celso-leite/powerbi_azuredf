@@ -3,14 +3,34 @@
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Stopped",
-		"pipelines": [],
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_relatorios_winthor_oracle_adls",
+					"type": "PipelineReference"
+				}
+			}
+		],
 		"type": "ScheduleTrigger",
 		"typeProperties": {
 			"recurrence": {
-				"frequency": "Minute",
-				"interval": 15,
-				"startTime": "2026-10-01T13:36:00",
-				"timeZone": "E. South America Standard Time"
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2025-01-01T06:40:00",
+				"timeZone": "E. South America Standard Time",
+				"schedule": {
+					"minutes": [
+						44
+					],
+					"hours": [
+						6,
+						9,
+						11,
+						15,
+						16,
+						18
+					]
+				}
 			}
 		}
 	}
