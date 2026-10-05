@@ -15,6 +15,12 @@
 					"referenceName": "pl_potencial_Rota_oracle_adls",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_okj360_oracle_adls",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
