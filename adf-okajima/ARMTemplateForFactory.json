@@ -5443,6 +5443,85 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_okj360_oracle_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_OKJ360_Base_Desdobrada",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.01:30:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 60,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"oracleReaderQuery": "SELECT CAST(ID_CICLO AS NUMBER(18,0)) AS ID_CICLO, DATA_INICIO, CAST(VERSAO AS NUMBER(6,0)) AS VERSAO, CAST(CODIGO_CLIENTE AS NUMBER(9,0)) AS CODIGO_CLIENTE, TIPO_BASE_VENCEDORA, CAST(CODIGO_TELEVENDEDOR AS NUMBER(18,0)) AS CODIGO_TELEVENDEDOR, CAST(CODIGO_RCA_CAMPO AS NUMBER(18,0)) AS CODIGO_RCA_CAMPO, METODO_DISTRIBUICAO, CLIENTE_ORFAO, DATA_ULTIMA_VENDA_FISICA, CAST(DIAS_SEM_VENDA_FISICA AS NUMBER(6,0)) AS DIAS_SEM_VENDA_FISICA, CAST(QTD_MESES_COM_COMPRA AS NUMBER(3,0)) AS QTD_MESES_COM_COMPRA, VERSAO_REGRA, CAST(QTD_ALOCACOES_ATIVAS AS NUMBER(18,0)) AS QTD_ALOCACOES_ATIVAS FROM OKAJIMA.OKJ360_BASE_DESDOBRADA_PBI",
+								"partitionOption": "None",
+								"queryTimeout": "00:30:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": false,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_oracle_dynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": "OKAJIMA",
+									"TableName": "OKJ360_BASE_DESDOBRADA_PBI"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_dynamic",
+								"type": "DatasetReference",
+								"parameters": {
+									"Directory": "fatos/okj360_base_desdobrada_pbi",
+									"FileName": "okj360_base_desdobrada_pbi.parquet"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "fatos"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle_dynamic')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_potencial_Rota_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -8528,6 +8607,65 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fatocomissaocamp_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatocancelamento_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Trigger_mensal')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_relatorios_winthor_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_potencial_Rota_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_okj360_oracle_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Month",
+						"interval": 1,
+						"startTime": "2025-01-01T06:40:00",
+						"timeZone": "E. South America Standard Time",
+						"schedule": {
+							"minutes": [
+								44
+							],
+							"hours": [
+								6,
+								11
+							],
+							"monthDays": [
+								1,
+								2
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_relatorios_winthor_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_potencial_Rota_oracle_adls')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_okj360_oracle_adls')]"
 			]
 		},
 		{
