@@ -218,11 +218,13 @@ Pipeline `pl_dimensoes_incremental`:
 - Processa configuracao incremental atual:
   - tabela `public.dimcabecalhopedidovenda_pbi`
   - coluna de particao: `TO_CHAR(datavenda, 'YYYYMM')`
-  - `monthsToProcess=2`
+  - `monthsToProcess=10` temporariamente para reprocessar janeiro a outubro de 2026 (padrao operacional: `6`)
 - Calcula a janela mensal pela data local de Sao Paulo (`CURRENT_TIMESTAMP AT TIME ZONE 'America/Sao_Paulo'`) e retorna apenas `anomes` existentes na tabela de origem. Isso evita gerar parquet vazio do mes seguinte antes da virada local ou quando ainda nao ha linhas no novo mes.
 - Chama `pl_dimensoes_process_incremental_partitions`.
 
 Pipeline filho `pl_dimensoes_process_incremental_partitions`:
+- Processa um `anomes` de cada vez (`isSequential=true`).
+- O SELECT explicito de `dimcabecalhopedidovenda_pbi` inclui `situacao_nfe` como texto simplificado, recebido do Supabase.
 - Para cada `anomes`:
   - deleta arquivo anterior
   - recopia particao mensal
@@ -233,6 +235,35 @@ Tabelas SQL utilizadas (origem Supabase):
 
 Path de saida:
 - `dimensoes/dimcabecalhopedidovenda_pbi/dimcabecalhopedidovenda_pbi_{anomes}.parquet`
+
+### Reprocessamento temporario do cabecalho - 20/10/2026
+
+- Alteracao local preparada; publicacao e execucao no Azure ainda nao verificadas.
+- Alteracao permanente: incluir `situacao_nfe` no SELECT de `Copy_Incremental_Partition`.
+- Alteracao temporaria: `monthsToProcess=10` no pipeline pai. Em outubro de 2026,
+  a janela cobre `202601` a `202610`, retornando somente competencias existentes
+  no Supabase. O filtro usa a data de venda (`datavenda`).
+- Este valor e uma janela movel de dez meses; nao representa janeiro fixo se
+  executado em outro mes. Restaurar o padrao apos concluir esta carga.
+- Antes da copia, confirmar que o reprocessamento Oracle -> Supabase terminou
+  e que `situacao_nfe` esta preenchido com os rotulos esperados para os pedidos
+  de 2026. Conferir a tipagem como texto no Power Query/modelo.
+- Publicar os dois pipelines e acompanhar a execucao: a lista esperada vai de
+  janeiro a outubro de 2026, se houver dados em todas essas competencias.
+- A copia de cada competencia deleta o arquivo anterior antes de regrava-lo;
+  conferir sucesso de todas as copias e presenca de `situacao_nfe` nos Parquets.
+
+Retorno ao padrao apos validar o reprocessamento:
+
+1. No arquivo `azure_df/pipeline/pl_dimensoes_incremental.json`, alterar somente
+   `table_configurations.defaultValue[0].monthsToProcess` de `10` para `6`.
+2. Manter `situacao_nfe` no SELECT do pipeline filho.
+3. Republicar o pipeline pai e confirmar a janela normal de seis meses
+   (em outubro de 2026, `202605` a `202610`).
+4. Atualizar este registro para indicar conclusao, com evidencias de execucao.
+
+A adicao do campo e o retorno da janela sao etapas independentes. Nao restaurar
+integralmente o pipeline filho, pois isso removeria `situacao_nfe` da exportacao.
 
 ## 6) Detalhamento do dominio Metas
 
