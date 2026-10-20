@@ -1517,13 +1517,6 @@
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "pl_dimensoes_incremental",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
 							"referenceName": "pl_tabelas_preco_pbi",
 							"type": "PipelineReference"
 						},
