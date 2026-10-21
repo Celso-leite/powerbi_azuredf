@@ -8547,6 +8547,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_dimensoes_incremental",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -8598,7 +8605,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_rodada_negocios')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatocomissaocamp_oracle_adls')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_fatocancelamento_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dimensoes_incremental')]"
 			]
 		},
 		{
