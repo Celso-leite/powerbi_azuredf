@@ -5443,6 +5443,159 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_ok360_portal_adls')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Extrair_Entidades",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.entidades",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copiar_Entidade",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:30:00",
+										"retry": 2,
+										"retryIntervalInSeconds": 60,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "PostgreSqlV2Source",
+											"query": {
+												"value": "@replace(item().consulta, '__EXECUCAO__', pipeline().RunId)",
+												"type": "Expression"
+											},
+											"queryTimeout": "00:30:00"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": false,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_ok360_portal_leitura",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_dynamic",
+											"type": "DatasetReference",
+											"parameters": {
+												"Directory": {
+													"value": "@concat('fatos/ok360_', item().entidade)",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@concat('ok360_', item().entidade, '.parquet')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Validar_Linhas",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "Copiar_Entidade",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greater(activity('Copiar_Entidade').output.rowsCopied, 0)",
+											"type": "Expression"
+										},
+										"ifFalseActivities": [
+											{
+												"name": "Falhar_Saida_Vazia",
+												"type": "Fail",
+												"dependsOn": [],
+												"userProperties": [],
+												"typeProperties": {
+													"message": "Saida vazia em caminho fixo: nao atualizar o modelo; validar fonte e reexecutar a carga completa.",
+													"errorCode": "OK360_SAIDA_VAZIA"
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"concurrency": 1,
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"entidades": {
+						"type": "Array",
+						"defaultValue": [
+							{
+								"entidade": "agenda",
+								"consulta": "SELECT\n    A.ID AS id_visita,\n    A.COD_RCA AS cod_rca,\n    TO_CHAR(A.SEMANA, 'YYYY-MM-DD') AS semana,\n    A.COD_RCA::TEXT || '|' || TO_CHAR(A.SEMANA, 'YYYYMMDD') AS chave_plano,\n    A.COD_CLIENTE AS cod_cliente,\n    TO_CHAR(A.DIA, 'YYYY-MM-DD') AS dia,\n    A.ESTADO AS estado_informado,\n    A.MOTIVO AS motivo_informado,\n    V.MOTIVO_ORIGEM AS origem_informada,\n    A.RESULTADO AS resultado_atual,\n    A.MOTIVO_ATUAL AS motivo_atual,\n    A.MOTIVO_ORIGEM AS origem_atual,\n    A.VISITADA AS atendimento_360,\n    A.AUTOMATICA AS atendimento_automatico,\n    TO_CHAR(A.PRAZO, 'YYYY-MM-DD') AS prazo,\n    A.PEDIDO_RESOLUTIVO AS pedido_resolutivo,\n    P.REVISAO AS revisao_plano,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.APURACAO_VISITAS A\nJOIN OK360.VISITAS V ON V.ID = A.ID\nJOIN OK360.PLANOS P ON P.COD_RCA = A.COD_RCA AND P.SEMANA = A.SEMANA\nWHERE NOT A.EXCLUIDA AND NOT P.SUBSTITUIDO\n  AND EXISTS (SELECT 1 FROM OK360.PARTICIPANTES T WHERE T.COD_RCA = A.COD_RCA)"
+							},
+							{
+								"entidade": "planos",
+								"consulta": "SELECT\n    P.COD_RCA AS cod_rca,\n    TO_CHAR(P.SEMANA, 'YYYY-MM-DD') AS semana,\n    P.COD_RCA::TEXT || '|' || TO_CHAR(P.SEMANA, 'YYYYMMDD') AS chave_plano,\n    P.REVISAO AS revisao_plano,\n    TO_CHAR(P.PUBLICADO_EM AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS publicado_em_utc,\n    P.BASE AS base_clientes,\n    P.ELEGIVEL AS elegivel,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.PLANOS P\nWHERE NOT P.SUBSTITUIDO\n  AND EXISTS (SELECT 1 FROM OK360.PARTICIPANTES T WHERE T.COD_RCA = P.COD_RCA)"
+							},
+							{
+								"entidade": "carteira",
+								"consulta": "SELECT\n    C.COD_RCA AS cod_rca,\n    TO_CHAR(C.SEMANA, 'YYYY-MM-DD') AS semana,\n    C.COD_RCA::TEXT || '|' || TO_CHAR(C.SEMANA, 'YYYYMMDD') AS chave_plano,\n    C.COD_CLIENTE AS cod_cliente,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.CARTEIRA_PLANO C\nJOIN OK360.PLANOS P ON P.COD_RCA = C.COD_RCA AND P.SEMANA = C.SEMANA\nWHERE NOT P.SUBSTITUIDO\n  AND EXISTS (SELECT 1 FROM OK360.PARTICIPANTES T WHERE T.COD_RCA = C.COD_RCA)"
+							}
+						]
+					}
+				},
+				"folder": {
+					"name": "fatos"
+				},
+				"annotations": [
+					"portal-360-v2-caminho-fixo",
+					"Reutiliza ds_adls_dynamic; refresh apos sucesso de todas as copias"
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_ok360_portal_leitura')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_dynamic')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_okj360_oracle_adls')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -7352,6 +7505,29 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/DataLake_Oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_ok360_portal_leitura')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_Portal",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [
+					"Okajima360 portal; fonte somente leitura"
+				],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "ok360",
+					"table": "visitas"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_Portal')]"
 			]
 		},
 		{

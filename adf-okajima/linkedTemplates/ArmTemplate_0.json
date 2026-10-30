@@ -553,6 +553,29 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_ok360_portal_leitura')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PostgreSupabase_Portal",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [
+					"Okajima360 portal; fonte somente leitura"
+				],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "ok360",
+					"table": "visitas"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase_Portal')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_supabase_etl_consumer_control')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -594,30 +617,6 @@
 				"typeProperties": {
 					"schema": "public",
 					"table": "etl_publication_control"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/PostgreSupabase')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_supabase_watermark_control')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "PostgreSupabase",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "ds_fatos_dinamico"
-				},
-				"annotations": [],
-				"type": "PostgreSqlV2Table",
-				"schema": [],
-				"typeProperties": {
-					"schema": "public",
-					"table": "watermark_control_fatos"
 				}
 			},
 			"dependsOn": [
