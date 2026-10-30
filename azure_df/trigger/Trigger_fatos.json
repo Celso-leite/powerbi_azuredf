@@ -75,6 +75,12 @@
 					"referenceName": "pl_dimensoes_incremental",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_ok360_portal_adls",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
