@@ -21,12 +21,6 @@
         ]
       }
     },
-    "variables": {
-      "resultados": {
-        "type": "Array",
-        "defaultValue": []
-      }
-    },
     "activities": [
       {
         "name": "Extrair_Entidades",
@@ -44,9 +38,9 @@
               "type": "Copy",
               "dependsOn": [],
               "policy": {
-                "timeout": "0.01:00:00",
-                "retry": 0,
-                "retryIntervalInSeconds": 30,
+                "timeout": "0.01:30:00",
+                "retry": 2,
+                "retryIntervalInSeconds": 60,
                 "secureOutput": false,
                 "secureInput": false
               },
@@ -57,7 +51,7 @@
                     "value": "@replace(item().consulta, '__EXECUCAO__', pipeline().RunId)",
                     "type": "Expression"
                   },
-                  "queryTimeout": "00:10:00"
+                  "queryTimeout": "00:30:00"
                 },
                 "sink": {
                   "type": "ParquetSink",
@@ -86,15 +80,15 @@
               ],
               "outputs": [
                 {
-                  "referenceName": "ds_ok360_parquet",
+                  "referenceName": "ds_adls_dynamic",
                   "type": "DatasetReference",
                   "parameters": {
-                    "pasta": {
-                      "value": "@concat('ok360/lotes/', pipeline().RunId, '/', item().entidade)",
+                    "Directory": {
+                      "value": "@concat('fatos/ok360_', item().entidade)",
                       "type": "Expression"
                     },
-                    "arquivo": {
-                      "value": "@concat(item().entidade, '.parquet')",
+                    "FileName": {
+                      "value": "@concat('ok360_', item().entidade, '.parquet')",
                       "type": "Expression"
                     }
                   }
@@ -122,106 +116,24 @@
                     "name": "Falhar_Saida_Vazia",
                     "type": "Fail",
                     "typeProperties": {
-                      "message": "Saida vazia: preservar a publicacao anterior e validar filtros, RLS e fonte.",
+                      "message": "Saida vazia em caminho fixo: nao atualizar o modelo; validar fonte e reexecutar a carga completa.",
                       "errorCode": "OK360_SAIDA_VAZIA"
                     }
                   }
                 ]
               }
-            },
-            {
-              "name": "Registrar_Contagem",
-              "type": "AppendVariable",
-              "dependsOn": [
-                {
-                  "activity": "Validar_Linhas",
-                  "dependencyConditions": [
-                    "Succeeded"
-                  ]
-                }
-              ],
-              "typeProperties": {
-                "variableName": "resultados",
-                "value": {
-                  "value": "@json(concat('{\"entidade\":\"', item().entidade, '\",\"linhas\":', string(activity('Copiar_Entidade').output.rowsCopied), '}'))",
-                  "type": "Expression"
-                }
-              }
             }
           ]
         }
-      },
-      {
-        "name": "Publicar_Manifesto",
-        "type": "Copy",
-        "dependsOn": [
-          {
-            "activity": "Extrair_Entidades",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ],
-        "policy": {
-          "timeout": "0.01:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "typeProperties": {
-          "source": {
-            "type": "PostgreSqlV2Source",
-            "query": {
-              "value": "@concat('SELECT ''', pipeline().RunId, '''::text AS id_execucao, ''portal-360-v1''::text AS contrato, ''', string(variables('resultados')), '''::text AS resultados_json, to_char(statement_timestamp() AT TIME ZONE ''UTC'', ''YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'') AS publicado_em_utc')",
-              "type": "Expression"
-            },
-            "queryTimeout": "00:05:00"
-          },
-          "sink": {
-            "type": "ParquetSink",
-            "storeSettings": {
-              "type": "AzureBlobFSWriteSettings"
-            },
-            "formatSettings": {
-              "type": "ParquetWriteSettings"
-            }
-          },
-          "enableStaging": false,
-          "translator": {
-            "type": "TabularTranslator",
-            "typeConversion": true,
-            "typeConversionSettings": {
-              "allowDataTruncation": false,
-              "treatBooleanAsNumber": false
-            }
-          }
-        },
-        "inputs": [
-          {
-            "referenceName": "ds_ok360_portal_leitura",
-            "type": "DatasetReference"
-          }
-        ],
-        "outputs": [
-          {
-            "referenceName": "ds_ok360_parquet",
-            "type": "DatasetReference",
-            "parameters": {
-              "pasta": {
-                "value": "@concat('ok360/manifestos/', pipeline().RunId)",
-                "type": "Expression"
-              },
-              "arquivo": "manifesto.parquet"
-            }
-          }
-        ]
       }
     ],
     "annotations": [
-      "portal-360-v1",
-      "Trigger_fatos; adicionar somente apos teste manual"
-    ]
+      "portal-360-v2-caminho-fixo",
+      "Reutiliza ds_adls_dynamic; refresh apos sucesso de todas as copias"
+    ],
+    "folder": {
+      "name": "fatos"
+    }
   },
   "type": "Microsoft.DataFactory/factories/pipelines"
 }
