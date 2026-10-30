@@ -1,0 +1,19 @@
+{
+  "name": "ds_ok360_portal_leitura",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "PostgreSupabase_Portal",
+      "type": "LinkedServiceReference"
+    },
+    "type": "PostgreSqlV2Table",
+    "typeProperties": {
+      "schema": "ok360",
+      "table": "visitas"
+    },
+    "schema": [],
+    "annotations": [
+      "Okajima360 portal; fonte somente leitura"
+    ]
+  },
+  "type": "Microsoft.DataFactory/factories/datasets"
+}
