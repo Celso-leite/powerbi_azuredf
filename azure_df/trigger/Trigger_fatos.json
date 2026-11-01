@@ -81,6 +81,12 @@
 					"referenceName": "pl_ok360_portal_adls",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_hitkc",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
