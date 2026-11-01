@@ -1605,13 +1605,6 @@
 					},
 					{
 						"pipelineReference": {
-							"referenceName": "pl_hitkc",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
 							"referenceName": "pl_rotas_oracle_adls",
 							"type": "PipelineReference"
 						},
@@ -1651,7 +1644,6 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_hitkc')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_rotas_oracle_adls')]"
 			]
 		},
@@ -1805,6 +1797,20 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_ok360_portal_adls",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_hitkc",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -1850,7 +1856,8 @@
 				"[concat(variables('factoryId'), '/pipelines/pl_fatopromocaodesconto')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_tabelas_preco_pbi')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_relatorio_verbas_oracle_adls')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_hitloreal')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_hitkc')]"
 			]
 		}
 	]
