@@ -24,12 +24,6 @@
 			},
 			{
 				"pipelineReference": {
-					"referenceName": "pl_hitkc",
-					"type": "PipelineReference"
-				}
-			},
-			{
-				"pipelineReference": {
 					"referenceName": "pl_rotas_oracle_adls",
 					"type": "PipelineReference"
 				}
