@@ -17,6 +17,10 @@
           {
             "entidade": "carteira",
             "consulta": "SELECT\n    C.COD_RCA AS cod_rca,\n    TO_CHAR(C.SEMANA, 'YYYY-MM-DD') AS semana,\n    C.COD_RCA::TEXT || '|' || TO_CHAR(C.SEMANA, 'YYYYMMDD') AS chave_plano,\n    C.COD_CLIENTE AS cod_cliente,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.CARTEIRA_PLANO C\nJOIN OK360.PLANOS P ON P.COD_RCA = C.COD_RCA AND P.SEMANA = C.SEMANA\nWHERE NOT P.SUBSTITUIDO\n  AND EXISTS (SELECT 1 FROM OK360.PARTICIPANTES T WHERE T.COD_RCA = C.COD_RCA)"
+          },
+          {
+            "entidade": "participantes",
+            "consulta": "SELECT\n    T.COD_RCA AS cod_rca,\n    T.EQUIPE AS equipe,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.PARTICIPANTES T"
           }
         ]
       }
@@ -128,7 +132,7 @@
       }
     ],
     "annotations": [
-      "portal-360-v2-caminho-fixo",
+      "portal-360-v3-participantes",
       "Reutiliza ds_adls_dynamic; refresh apos sucesso de todas as copias"
     ],
     "folder": {
