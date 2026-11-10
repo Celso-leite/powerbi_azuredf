@@ -105,7 +105,7 @@
 					},
 					{
 						"nome_tabela": "fatometafornecedor_pbi",
-						"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso FROM public.fatometafornecedor_pbi"
+						"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, meta_geral_customer, meta_semanal_customer FROM public.fatometafornecedor_pbi"
 					},
 					{
 						"nome_tabela": "fatometaproduto_pbi",
@@ -113,7 +113,7 @@
 					},
 					{
 						"nome_tabela": "fatometarca_pbi",
-						"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4 FROM public.fatometarca_pbi"
+						"query": "SELECT id, codigoentidademeta, codigoentidademeta2, codigofilial, codigorca, to_char(data, 'DD/MM/YYYY') AS data, valor, quantidadevenda, quantidadepedidos, mix, mixmedio, positivacao, clientecadastrado, quantidadeclienteativo, margem, peso, volume, descontovalorvenda, efetividade, efetividadediaria, mediaitens, mediaitenscliente, percentualvalordevolucao, percentualitensdevolucao, percentualinadimplencia, prazomedio, valormedioitem, valormediopedido, valormediopedidodia, precomedio, precomediopeso, valorp1, valorp2, valorp3, valorp4, positivacaop1, positivacaop2, positivacaop3, positivacaop4, meta_geral_customer, meta_semanal_customer FROM public.fatometarca_pbi"
 					},
 					{
 						"nome_tabela": "fatometamarca_pbi",
