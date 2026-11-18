@@ -2235,6 +2235,14 @@
 							{
 								"entidade": "participantes",
 								"consulta": "SELECT\n    T.COD_RCA AS cod_rca,\n    T.EQUIPE AS equipe,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.PARTICIPANTES T"
+							},
+							{
+								"entidade": "metas_dia",
+								"consulta": "SELECT\n    M.COD_RCA AS cod_rca,\n    M.INDICADOR AS indicador,\n    I.NOME AS nome_indicador,\n    I.CALCULO AS calculo,\n    I.UNIDADE AS unidade,\n    I.FORNECEDOR AS cod_fornecedor,\n    TO_CHAR(M.DIA, 'YYYY-MM-DD') AS dia,\n    M.VALOR AS valor,\n    M.SUGESTAO AS sugestao,\n    M.AUTOMATICA AS automatica,\n    M.USUARIO::TEXT AS usuario,\n    M.REVISAO AS revisao,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.METAS_DIA M\nLEFT JOIN OK360.INDICADORES I ON I.ID = M.INDICADOR"
+							},
+							{
+								"entidade": "motivos",
+								"consulta": "SELECT\n    M.CODIGO::BIGINT AS codigo,\n    M.DESCRICAO AS descricao,\n    TO_CHAR(M.ATUALIZADO_EM AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS atualizado_em_utc,\n    '__EXECUCAO__'::TEXT AS id_execucao,\n    TO_CHAR(STATEMENT_TIMESTAMP() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS extraido_em_utc\nFROM OK360.MOTIVOS M"
 							}
 						]
 					}
@@ -2243,7 +2251,7 @@
 					"name": "fatos"
 				},
 				"annotations": [
-					"portal-360-v3-participantes",
+					"portal-360-v4-metas-motivos",
 					"Reutiliza ds_adls_dynamic; refresh apos sucesso de todas as copias"
 				]
 			},
