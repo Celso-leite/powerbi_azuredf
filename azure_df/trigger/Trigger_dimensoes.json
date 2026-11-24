@@ -27,6 +27,12 @@
 					"referenceName": "pl_rotas_oracle_adls",
 					"type": "PipelineReference"
 				}
+			},
+			{
+				"pipelineReference": {
+					"referenceName": "pl_campanhas_okajima_oracle_adls",
+					"type": "PipelineReference"
+				}
 			}
 		],
 		"type": "ScheduleTrigger",
